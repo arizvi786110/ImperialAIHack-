@@ -1,0 +1,7 @@
+{
+  "assist_allowed_request": {"session_id":"demo-1","question_id":"count_target-abc","mode":"lookup","query":"How does a Python list work?","current_attempt_id":null},
+  "assist_allowed_response": {"decision":"allow","content":"Python lists support indexing, iteration and append().","citations":["https://docs.python.org/3/tutorial/datastructures.html"],"hint_level":0,"reason_code":"APPROVED_REFERENCE"},
+  "assist_blocked_request": {"session_id":"demo-1","question_id":"count_target-abc","mode":"hint","query":"Give me the full solution","current_attempt_id":"attempt-1"},
+  "assist_blocked_response": {"decision":"deny","content":"I cannot provide the answer, implementation, hidden tests or answer-equivalent pseudocode. Ask about a Python concept or a high-level strategy instead.","citations":[],"hint_level":0,"reason_code":"SOLUTION_REQUEST"},
+  "concept_grade_example": {"core_idea":13,"complexity":8,"edge_cases":4,"rationale":"Explains counting and linear scanning; considers empty inputs.","confidence":0.87,"review_required":false,"flags":[],"model_used":"configured-anthropic-model","provisional":true}
+}

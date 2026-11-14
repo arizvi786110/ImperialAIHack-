@@ -12,10 +12,21 @@ from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 from fastapi.responses import JSONResponse  # noqa: E402
 from starlette.exceptions import HTTPException as StarletteHTTPException  # noqa: E402
 
+from contextlib import asynccontextmanager  # noqa: E402
+
 from .config import settings  # noqa: E402
+from .data.questions import QUESTIONS  # noqa: E402
+from .db import repo  # noqa: E402
 from .routes import health, session  # noqa: E402
 
-app = FastAPI(title="COGNIT API", version="0.1.0")
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    repo.init_db(QUESTIONS)  # create tables + seed question bank
+    yield
+
+
+app = FastAPI(title="COGNIT API", version="0.1.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

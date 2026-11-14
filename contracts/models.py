@@ -1,11 +1,16 @@
-"""COGNIT integration contract (frozen 18:45 GMT).
+"""COGNIT integration contract.
 
-Single source of truth for API request/response shapes. The frontend TS mirror
-(committed by DS) must match these. No silent changes: discuss in #dev-backend.
+ONE source of truth per shape:
+- Question, assist, attempt-request and grade shapes are owned by Shreyaa in
+  `cognit_ai/contracts.py` and re-exported here. Change them there (and tell #dev-backend).
+- HTTP envelope, session, attempt-response, next and teacher shapes are owned by
+  the backend (Aalia) and defined below.
 
 PRIVATE fields (reference_solution, rubric, hidden_tests, concept_key,
 transfer_id, review_status) live only on PrivateQuestion and must never be sent
-to the frontend or the tutor. Use PrivateQuestion.to_public().
+to the frontend or the tutor. Always use PrivateQuestion.public().
+
+Test-case `input` is a LIST OF POSITIONAL ARGS, e.g. f(values, target) -> [[1, 2], 2].
 """
 
 from __future__ import annotations
@@ -13,6 +18,21 @@ from __future__ import annotations
 from typing import Any, Generic, Literal, Optional, TypeVar
 
 from pydantic import BaseModel, Field
+
+# Shared with the AI services (owned by Shreyaa).
+from cognit_ai.contracts import (  # noqa: F401
+    AssistRequest,
+    AssistResponse,
+    AttemptRequest,
+    ClientTestResult,
+    ConceptGrade,
+    HelpEvent,
+    PrivateQuestion,
+    PublicQuestion,
+    TestCase,
+)
+
+ExampleTest = TestCase  # backwards-compatible alias
 
 # ---------------------------------------------------------------------------
 # Envelope: every response is {ok, data?, error?}
@@ -33,57 +53,10 @@ class Envelope(BaseModel, Generic[T]):
 
 
 # ---------------------------------------------------------------------------
-# Questions
-# ---------------------------------------------------------------------------
-
-Difficulty = Literal[1, 2, 3]
-
-
-class ExampleTest(BaseModel):
-    input: Any
-    expected: Any
-
-
-class PublicQuestion(BaseModel):
-    id: str
-    seed: int
-    skill_tags: list[str]
-    difficulty: Difficulty
-    title: str
-    statement: str
-    function_signature: str
-    example_tests: list[ExampleTest]
-    hint_policy: str
-    max_points: int = 100
-
-
-class RubricCriterion(BaseModel):
-    id: str
-    description: str
-    max_points: int
-
-
-class PrivateQuestion(PublicQuestion):
-    """Server-only. Never serialise this to a client or the tutor."""
-
-    reference_solution: str
-    rubric: list[RubricCriterion]
-    hidden_tests: list[ExampleTest]
-    concept_key: str
-    transfer_id: Optional[str] = None
-    review_status: Literal["draft", "vetted", "rejected"] = "draft"
-
-    def to_public(self) -> PublicQuestion:
-        # Explicit allowlist: only fields declared on PublicQuestion survive.
-        return PublicQuestion.model_validate(
-            self.model_dump(include=set(PublicQuestion.model_fields))
-        )
-
-
-# ---------------------------------------------------------------------------
 # Session state
 # ---------------------------------------------------------------------------
 
+Difficulty = Literal[1, 2, 3]
 Stage = Literal["attempt", "plan", "transfer", "complete"]
 HelpMode = Literal["lookup", "plan", "hint"]
 
@@ -94,7 +67,7 @@ class SessionState(BaseModel):
     allowed_help: list[HelpMode]
 
 
-# POST /api/session/start
+# POST /api/session/start  (and GET /api/session/{id}, same response shape)
 class SessionStartRequest(BaseModel):
     student_alias: str = Field(min_length=1, max_length=64)
 
@@ -106,33 +79,8 @@ class SessionStartResponse(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# POST /api/attempt
+# POST /api/attempt  (request = AttemptRequest from cognit_ai)
 # ---------------------------------------------------------------------------
-
-
-class ClientTestResult(BaseModel):
-    id: str
-    pass_: bool = Field(alias="pass")
-    actual: Any = None
-    error: Optional[str] = None
-
-    model_config = {"populate_by_name": True}
-
-
-class HelpEvent(BaseModel):
-    type: str
-    timestamp: str
-
-
-class AttemptRequest(BaseModel):
-    session_id: str
-    question_id: str
-    code: str
-    explanation: str = ""
-    plan: str = ""
-    client_test_results: list[ClientTestResult] = []
-    help_events: list[HelpEvent] = []
-
 
 NextAction = Literal["next", "retry", "plan", "transfer", "complete"]
 
@@ -144,34 +92,8 @@ class AttemptResponse(BaseModel):
     concept_score: float
     flags: list[str]  # always includes "client_tests_untrusted" until a trusted runner exists
     feedback: str
-    mastery_snapshot: dict[str, float]
+    mastery_snapshot: dict[str, Any]
     next_action: NextAction
-
-
-# ---------------------------------------------------------------------------
-# POST /api/assist
-# ---------------------------------------------------------------------------
-
-
-class AssistRequest(BaseModel):
-    session_id: str
-    question_id: str
-    mode: HelpMode
-    query: str = Field(max_length=2000)
-    current_attempt_id: Optional[str] = None
-
-
-class Citation(BaseModel):
-    title: str
-    url: str
-
-
-class AssistResponse(BaseModel):
-    decision: Literal["allow", "limit", "deny"]
-    content: str
-    citations: list[Citation] = []
-    hint_level: int = 0
-    reason_code: str
 
 
 # ---------------------------------------------------------------------------

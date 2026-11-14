@@ -17,7 +17,7 @@ from contextlib import asynccontextmanager  # noqa: E402
 from .config import settings  # noqa: E402
 from .data.questions import QUESTIONS  # noqa: E402
 from .db import repo  # noqa: E402
-from .routes import health, session  # noqa: E402
+from .routes import assist, attempt, health, next, session, teacher  # noqa: E402
 
 
 @asynccontextmanager
@@ -43,6 +43,8 @@ def _error(status: int, code: str, message: str) -> JSONResponse:
 
 @app.exception_handler(StarletteHTTPException)
 async def http_error(_: Request, exc: StarletteHTTPException) -> JSONResponse:
+    if isinstance(exc.detail, dict) and "code" in exc.detail:
+        return _error(exc.status_code, exc.detail["code"], exc.detail.get("message", exc.detail["code"]))
     code = exc.detail if isinstance(exc.detail, str) and exc.detail.isupper() else f"HTTP_{exc.status_code}"
     return _error(exc.status_code, code, str(exc.detail))
 
@@ -59,5 +61,5 @@ async def unhandled_error(_: Request, exc: Exception) -> JSONResponse:
     return _error(500, "INTERNAL_ERROR", "Unexpected server error")
 
 
-app.include_router(health.router)
-app.include_router(session.router)
+for r in (health, session, attempt, assist, next, teacher):
+    app.include_router(r.router)

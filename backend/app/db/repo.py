@@ -47,6 +47,11 @@ def get_problem(db: Session, question_id: str) -> Optional[PrivateQuestion]:
     return PrivateQuestion.model_validate(row.data) if row else None
 
 
+def list_problems(db: Session) -> list[PrivateQuestion]:
+    rows = db.scalars(select(ProblemRow).order_by(ProblemRow.created_at, ProblemRow.id))
+    return [PrivateQuestion.model_validate(r.data) for r in rows]
+
+
 # ---------------------------------------------------------------- sessions
 
 
@@ -128,6 +133,7 @@ def add_attempt(
     explanation: str = "",
     plan: str = "",
     client_test_results: Optional[list[dict[str, Any]]] = None,
+    client_help_events: Optional[list[dict[str, Any]]] = None,
     assisted: bool = False,
     idempotency_key: Optional[str] = None,
 ) -> AttemptRow:
@@ -139,6 +145,7 @@ def add_attempt(
         explanation=explanation,
         plan=plan,
         client_test_results=client_test_results or [],
+        client_help_events=client_help_events or [],
         client_tests_untrusted=True,  # browser results are never trusted
         assisted=assisted,
         idempotency_key=idempotency_key,
@@ -150,6 +157,10 @@ def add_attempt(
 
 def get_attempt(db: Session, attempt_id: str) -> Optional[AttemptRow]:
     return db.get(AttemptRow, attempt_id)
+
+
+def get_attempt_by_key(db: Session, idempotency_key: str) -> Optional[AttemptRow]:
+    return db.scalars(select(AttemptRow).where(AttemptRow.idempotency_key == idempotency_key)).first()
 
 
 def list_attempts(db: Session, session_id: str) -> list[AttemptRow]:
@@ -265,6 +276,25 @@ def sync_mastery(db: Session, session_id: str, snapshot: dict[str, Any]) -> None
         row.independent_mean = m["independent_mean"]
         row.heuristic_mastery = m["heuristic_mastery"]
     db.flush()
+
+
+ASSISTED_MODES = ("hint", "plan")  # Lookup (docs) is approved informational help: not "assisted".
+
+
+def used_assistance(db: Session, session_id: str, question_id: str) -> bool:
+    """Server-side truth for 'assisted': any non-denied Hint/Plan on this question."""
+    return any(
+        e.question_id == question_id and e.mode in ASSISTED_MODES and e.decision != "deny"
+        for e in list_assistance_events(db, session_id)
+    )
+
+
+def list_evaluations(db: Session, attempt_ids: list[str]) -> list[EvaluationRow]:
+    if not attempt_ids:
+        return []
+    return list(
+        db.scalars(select(EvaluationRow).where(EvaluationRow.attempt_id.in_(attempt_ids)).order_by(EvaluationRow.created_at))
+    )
 
 
 def count_hints(db: Session, session_id: str, question_id: str) -> int:

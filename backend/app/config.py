@@ -29,6 +29,13 @@ class Settings(BaseSettings):
     # Persistence. Empty = SQLite at backend/cognit.db; or a Supabase Postgres URL.
     database_url: str = ""
 
+    # Progression + cost guards (A6). Each attempt = 1 grader call; each Hint/Plan = 1 tutor call.
+    max_questions_per_session: int = 8
+    max_attempts_per_session: int = 40
+    max_assists_per_session: int = 40
+    attempts_per_minute: int = 10
+    assists_per_minute: int = 20
+
     @property
     def origins(self) -> list[str]:
         return [o.strip() for o in self.allowed_origins.split(",") if o.strip()]

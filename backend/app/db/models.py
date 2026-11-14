@@ -30,6 +30,9 @@ class SessionRow(Base):
     allowed_help: Mapped[list[str]] = mapped_column(JSON, default=list)
     # Serialised cognit_ai.adapt.LearnerState (see repo.load/save_learner_state).
     learner_state: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    # Outcome of the latest attempt ('transfer'|'harder'|'same'|'remedial'), consumed by /api/next.
+    last_reason: Mapped[Optional[str]] = mapped_column(String(16), nullable=True)
+    questions_served: Mapped[int] = mapped_column(Integer, default=1)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now, onupdate=_now)
 
@@ -56,9 +59,13 @@ class AttemptRow(Base):
     plan: Mapped[str] = mapped_column(Text, default="")
     client_test_results: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list)
     client_tests_untrusted: Mapped[bool] = mapped_column(Boolean, default=True)
+    # Server-decided: Hint or Plan Mode used on this question before submitting.
     assisted: Mapped[bool] = mapped_column(Boolean, default=False)
-    # For A6 idempotent submission.
+    # help_events as reported by the browser (context only; untrusted).
+    client_help_events: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list)
+    # A6 idempotent submission: same key -> same stored response, no second grading.
     idempotency_key: Mapped[Optional[str]] = mapped_column(String(64), unique=True, nullable=True)
+    response: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 
 

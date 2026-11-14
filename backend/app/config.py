@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     tutor_model: str = "claude-sonnet-5-5"
     grader_model: str = "claude-fable-5-2"
 
-    # Persistence (A2). Empty = in-memory store.
+    # Persistence. Empty = SQLite at backend/cognit.db; or a Supabase Postgres URL.
     database_url: str = ""
 
     @property

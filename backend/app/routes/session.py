@@ -20,7 +20,7 @@ def start_session(req: SessionStartRequest, db: Session = Depends(get_db)) -> En
     row = repo.create_session(db, req.student_alias, question.id, state)
     return Envelope(
         ok=True,
-        data=SessionStartResponse(session_id=row.id, question=question.to_public(), state=state),
+        data=SessionStartResponse(session_id=row.id, question=question.public(), state=state),
     )
 
 
@@ -35,5 +35,5 @@ def get_session(session_id: str, db: Session = Depends(get_db)) -> Envelope[Sess
         raise HTTPException(500, "QUESTION_MISSING")
     return Envelope(
         ok=True,
-        data=SessionStartResponse(session_id=row.id, question=question.to_public(), state=repo.session_state(row)),
+        data=SessionStartResponse(session_id=row.id, question=question.public(), state=repo.session_state(row)),
     )

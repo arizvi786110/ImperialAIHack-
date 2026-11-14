@@ -5,7 +5,8 @@ from typing import Any, Optional
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from contracts.models import PrivateQuestion, SessionState
+from cognit_ai.adapt import Evidence, LearnerState
+from contracts.models import ConceptGrade, PrivateQuestion, SessionState
 
 from .database import Base, db_session, engine
 from .models import (
@@ -82,6 +83,37 @@ def update_session(
         row.current_question_id = current_question_id
     db.flush()
     return row
+
+
+# ---------------------------------------------------------------- learner state (cognit_ai.adapt)
+
+
+def load_learner_state(row: SessionRow) -> LearnerState:
+    d = row.learner_state or {}
+    if not d:
+        return LearnerState(difficulty=row.difficulty)
+    return LearnerState(
+        difficulty=d["difficulty"],
+        evidence=[Evidence(**e) for e in d["evidence"]],
+        pending_transfer=d["pending_transfer"],
+        independent_streak=d["independent_streak"],
+        last_skill=d["last_skill"],
+        seen_question_ids=set(d["seen_question_ids"]),
+    )
+
+
+def save_learner_state(db: Session, row: SessionRow, state: LearnerState) -> None:
+    row.learner_state = {
+        "difficulty": state.difficulty,
+        "evidence": [vars(e) for e in state.evidence],
+        "pending_transfer": state.pending_transfer,
+        "independent_streak": state.independent_streak,
+        "last_skill": state.last_skill,
+        "seen_question_ids": sorted(state.seen_question_ids),
+    }
+    row.difficulty = state.difficulty
+    sync_mastery(db, row.id, state.snapshot())
+    db.flush()
 
 
 # ---------------------------------------------------------------- attempts
@@ -180,26 +212,26 @@ def add_evaluation(
     db: Session,
     *,
     attempt_id: str,
+    grade: ConceptGrade,
     code_score: float,
-    concept_score: float,
     provisional_score: float,
-    rationale: Optional[dict[str, Any]] = None,
-    confidence: Optional[float] = None,
-    needs_review: bool = False,
-    flags: Optional[list[str]] = None,
-    grader_model: Optional[str] = None,
+    extra_flags: Optional[list[str]] = None,
 ) -> EvaluationRow:
     row = EvaluationRow(
         id=new_id("e"),
         attempt_id=attempt_id,
         code_score=code_score,
-        concept_score=concept_score,
+        concept_score=grade.total,
         provisional_score=provisional_score,
-        rationale=rationale or {},
-        confidence=confidence,
-        needs_review=needs_review,
-        flags=flags or [],
-        grader_model=grader_model,
+        core_idea=grade.core_idea,
+        complexity=grade.complexity,
+        edge_cases=grade.edge_cases,
+        rationale=grade.rationale,
+        confidence=grade.confidence,
+        review_required=grade.review_required,
+        flags=list(dict.fromkeys([*grade.flags, *(extra_flags or [])])),
+        model_used=grade.model_used,
+        provisional=grade.provisional,
     )
     db.add(row)
     db.flush()
@@ -219,33 +251,29 @@ def get_mastery(db: Session, session_id: str) -> list[MasteryStateRow]:
     return list(db.scalars(select(MasteryStateRow).where(MasteryStateRow.session_id == session_id)))
 
 
-def record_mastery_result(
-    db: Session, *, session_id: str, skill: str, correct: bool, assisted: bool, mastery_estimate: Optional[float] = None
-) -> MasteryStateRow:
-    row = db.scalars(
-        select(MasteryStateRow).where(MasteryStateRow.session_id == session_id, MasteryStateRow.skill == skill)
-    ).first()
-    if row is None:
-        row = MasteryStateRow(
-            session_id=session_id,
-            skill=skill,
-            independent_correct=0,
-            independent_total=0,
-            assisted_correct=0,
-            assisted_total=0,
-            mastery_estimate=0.0,
-        )
-        db.add(row)
-    if assisted:
-        row.assisted_total += 1
-        row.assisted_correct += int(correct)
-    else:
-        row.independent_total += 1
-        row.independent_correct += int(correct)
-    if mastery_estimate is not None:
-        row.mastery_estimate = mastery_estimate
+def sync_mastery(db: Session, session_id: str, snapshot: dict[str, Any]) -> None:
+    """Upsert mastery_state rows from LearnerState.snapshot() (called by save_learner_state)."""
+    existing = {r.skill: r for r in get_mastery(db, session_id)}
+    for skill, m in snapshot.get("mastery_by_skill", {}).items():
+        row = existing.get(skill)
+        if row is None:
+            row = MasteryStateRow(session_id=session_id, skill=skill)
+            db.add(row)
+        row.independent_transfer_correct = m["independent_transfer_correct"]
+        row.independent_transfer_total = m["independent_transfer_total"]
+        row.assisted_mean = m["assisted_mean"]
+        row.independent_mean = m["independent_mean"]
+        row.heuristic_mastery = m["heuristic_mastery"]
     db.flush()
-    return row
+
+
+def count_hints(db: Session, session_id: str, question_id: str) -> int:
+    """prior_hints for TutorService.assist (hint ladder level)."""
+    return sum(
+        1
+        for e in list_assistance_events(db, session_id)
+        if e.question_id == question_id and e.mode == "hint" and e.decision != "deny"
+    )
 
 
 # ---------------------------------------------------------------- teacher reviews (append-only)

@@ -134,3 +134,21 @@ class TeacherReviewRow(Base):
     reviewer_note: Mapped[str] = mapped_column(Text)
     effective_score: Mapped[float] = mapped_column(Float)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+
+class ConceptProbeRow(Base):
+    """One conceptual follow-up per submitted attempt; never replaces objective code points."""
+    __tablename__ = "concept_probes"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    session_id: Mapped[str] = mapped_column(ForeignKey("sessions.id"), index=True)
+    attempt_id: Mapped[str] = mapped_column(ForeignKey("attempts.id"), unique=True, index=True)
+    question_id: Mapped[str] = mapped_column(ForeignKey("problems.id"))
+    question: Mapped[str] = mapped_column(Text)
+    source: Mapped[str] = mapped_column(String(32))
+    answer: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    score: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    confidence: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    rationale: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    needs_review: Mapped[bool] = mapped_column(Boolean, default=False)
+    model_used: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)

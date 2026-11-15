@@ -6,6 +6,7 @@ import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { api, ApiClientError, errorMessage } from '../api/client'
 import { AttemptResult } from '../components/AttemptResult'
 import type { AssistExchange } from '../components/AssistCard'
+import { ConceptInterview } from '../components/ConceptInterview'
 import { CodeEditor } from '../components/CodeEditor'
 import { HintBox } from '../components/HintBox'
 import { OutputPanel } from '../components/OutputPanel'
@@ -313,6 +314,8 @@ export function Workspace(props: WorkspaceProps) {
                     planAvailable={planUnlocked}
                   />
                 )}
+
+                {lastAttempt && <ConceptInterview key={lastAttempt.attempt_id} sessionId={sessionId} attemptId={lastAttempt.attempt_id} />}
 
                 <OutputPanel result={result} status={status} tests={question.example_tests} functionName={functionName} />
 

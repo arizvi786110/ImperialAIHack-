@@ -42,7 +42,7 @@ async function request<T>(method: 'GET' | 'POST', path: string, body?: unknown, 
   try {
     res = await fetch(`${API_BASE_URL}${path}`, {
       method,
-      headers: { ...(body !== undefined && { 'Content-Type': 'application/json' }), ...headers },
+      headers: { ...(body !== undefined && { 'Content-Type': 'application/json' }), ...(sessionStorage.getItem('cognit-demo-code') && { 'X-Cognit-Demo-Key': sessionStorage.getItem('cognit-demo-code')! }), ...headers },
       body: body === undefined ? undefined : JSON.stringify(body),
     })
   } catch {

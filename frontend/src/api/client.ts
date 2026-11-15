@@ -1,23 +1,83 @@
-import type { ApiResponse, AssistResponse, AttemptRequest, AttemptResponse, SessionStartResponse, TeacherSessionView, TeacherReviewResponse, PublicQuestion } from '../types/contracts'
+/**
+ * Typed client for the COGNIT FastAPI backend. Every response is the
+ * {ok, data?, error?:{code,message}} envelope; this unwraps it and throws
+ * ApiClientError on failure so callers can branch on `code`.
+ */
+import type {
+  ApiResponse,
+  AssistRequest,
+  AssistResponse,
+  AttemptRequest,
+  AttemptResponse,
+  NextRequest,
+  NextResponse,
+  SessionStartResponse,
+  TeacherReviewRequest,
+  TeacherReviewResponse,
+  TeacherSessionView,
+} from '../types/contracts'
 
-const BASE = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') ?? ''
+/**
+ * Backend origin. Empty = same origin (in dev, Vite proxies /api to http://localhost:8000).
+ * VITE_API_URL is accepted as an alias (used by the integration branch).
+ */
+export const API_BASE_URL = ((import.meta.env.VITE_API_BASE_URL ?? import.meta.env.VITE_API_URL ?? '') as string).replace(/\/+$/, '')
+const API_LABEL = API_BASE_URL || 'this site (dev proxy to http://localhost:8000)'
 
-export async function api<T>(path: string, body?: unknown): Promise<T> {
-  const response = await fetch(BASE + path, {
-    method: body === undefined ? 'GET' : 'POST',
-    headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
-    body: body === undefined ? undefined : JSON.stringify(body),
-  })
-  const data: ApiResponse<T> = await response.json().catch(() => {
-    throw new Error('Backend did not return JSON. Check the API server.')
-  })
-  if (!response.ok || !data.ok || !data.data) throw new Error(data.error?.message ?? 'API request failed (' + response.status + ')')
-  return data.data
+export class ApiClientError extends Error {
+  readonly code: string
+  readonly status: number
+
+  constructor(code: string, message: string, status: number) {
+    super(message)
+    this.name = 'ApiClientError'
+    this.code = code
+    this.status = status
+  }
 }
-export const startSession = (student_alias: string) => api<SessionStartResponse>('/api/session/start', {student_alias})
-export const restoreSession = (id: string) => api<SessionStartResponse>('/api/session/' + encodeURIComponent(id))
-export const submitAttempt = (body: AttemptRequest) => api<AttemptResponse>('/api/attempt', body)
-export const requestHelp = (body: {session_id:string,question_id:string,mode:'lookup'|'hint'|'plan',query:string,current_attempt_id?:string}) => api<AssistResponse>('/api/assist',body)
-export const nextQuestion = (session_id:string,previous_attempt_id:string) => api<{question:PublicQuestion,reason:string,state:SessionStartResponse['state']}>('/api/next',{session_id,previous_attempt_id})
-export const getTeacher = (id:string) => api<TeacherSessionView>('/api/teacher/session/' + encodeURIComponent(id))
-export const reviewAttempt = (attempt_id:string,override_concept_score:number,reviewer_note:string) => api<TeacherReviewResponse>('/api/teacher/review',{attempt_id,override_concept_score,reviewer_note,approved:true})
+
+async function request<T>(method: 'GET' | 'POST', path: string, body?: unknown, headers?: Record<string, string>): Promise<T> {
+  let res: Response
+  try {
+    res = await fetch(`${API_BASE_URL}${path}`, {
+      method,
+      headers: { ...(body !== undefined && { 'Content-Type': 'application/json' }), ...headers },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    })
+  } catch {
+    throw new ApiClientError('NETWORK_ERROR', `Can't reach the COGNIT API at ${API_LABEL}. Is the backend running?`, 0)
+  }
+
+  let envelope: ApiResponse<T> | null = null
+  try {
+    envelope = (await res.json()) as ApiResponse<T>
+  } catch {
+    // fall through: non-JSON response
+  }
+  if (!envelope) throw new ApiClientError(`HTTP_${res.status}`, `Unexpected response from the API (HTTP ${res.status}).`, res.status)
+  if (!res.ok || !envelope.ok || envelope.data === undefined || envelope.data === null) {
+    const code = envelope.error?.code ?? `HTTP_${res.status}`
+    throw new ApiClientError(code, envelope.error?.message ?? 'Request failed.', res.status)
+  }
+  return envelope.data
+}
+
+const enc = encodeURIComponent
+
+export const api = {
+  startSession: (student_alias: string) => request<SessionStartResponse>('POST', '/api/session/start', { student_alias }),
+  /** Reload saved progress after a refresh. Same shape as startSession. */
+  getSession: (sessionId: string) => request<SessionStartResponse>('GET', `/api/session/${enc(sessionId)}`),
+  /** One idempotency key per Submit click: a retry/double click won't grade twice. */
+  submitAttempt: (req: AttemptRequest, idempotencyKey: string) =>
+    request<AttemptResponse>('POST', '/api/attempt', req, { 'Idempotency-Key': idempotencyKey }),
+  assist: (req: AssistRequest) => request<AssistResponse>('POST', '/api/assist', req),
+  next: (req: NextRequest) => request<NextResponse>('POST', '/api/next', req),
+  getTeacherSession: (sessionId: string) => request<TeacherSessionView>('GET', `/api/teacher/session/${enc(sessionId)}`),
+  submitReview: (req: TeacherReviewRequest) => request<TeacherReviewResponse>('POST', '/api/teacher/review', req),
+}
+
+export function errorMessage(err: unknown): string {
+  if (err instanceof ApiClientError) return err.message
+  return err instanceof Error ? err.message : String(err)
+}

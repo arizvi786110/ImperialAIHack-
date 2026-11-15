@@ -5,23 +5,67 @@
 **Hard deadline:** 15 November 2026, 12:00 GMT. Internal target: 11:15 GMT.
 **Ownership:** Product lead = Ahmed; AI/ML = Shreya; Backend/runner = Aalia; Frontend/video = DS.
 
-## Status board (updated 15 Nov 2026, from repo contents on `main` and all remote branches)
+## Status board (updated 15 Nov 2026, from repo contents on `main` at `e1732c1`)
 Legend: ✅ Done · 🟡 Partly done / needs follow-up · ⬜ To do. Status is judged only from what's in the repo. Work done but not pushed doesn't show here; update your own row if so.
 
-> **Not on `main` yet:** all backend work (A1–A6) is only on `origin/backend/a3-endpoints` (which also contains `backend/a2-persistence`). **Aalia: open a PR from `backend/a3-endpoints` to `main`.** Until it merges, `main` has no `backend/` or `contracts/`.
+> **On `main`:**
+> - Aalia's backend (PR #3) and Shreya's AI updates (PR #2).
+> - Ahmed's integration commit `e1732c1`: a 6-question bank (`backend/app/data/bank.json`), stricter test verification in `scoring.py` with regression tests, CI (`.github/workflows/cognit-integration.yml`), and a simple student/teacher frontend.
+>
+> **Frontend decision (DS, 15 Nov):** main's frontend will be DS's D2–D5, adapted to Ahmed's scoring contract. It replaces Ahmed's interim pages and runner. Not yet committed; see "Still open" below.
 
 | Owner | Done | Partly done | To do |
 |---|---|---|---|
-| Shreya (AI/ML) | S1, S2, S3 (code), S4, S5 | S3 live gold run, S6 | none |
-| Aalia (Backend) | A1, A2, A3, A6 (all unmerged) | A4 (needs DS sign-off), A5 (deployment) | merge to `main` |
-| DS (Frontend/video) | D1 | none | D2, D3, D4, D5, D6, D7 |
-| Ahmed (Product) | none | none | H1, H2, H3, H4, H5, H6 |
+| Shreya (AI/ML) | S1, S2, S3 (code), S4, S5 (now 6 templates with transfer partners, PR #2) | S3 live gold run, S6 | none |
+| Aalia (Backend) | A1, A2, A3, A6 (merged) | A4 (contract rewritten for the implemented runner; needs Aalia's OK), A5 (Dockerfile and deploy guide ready; not yet deployed) | none |
+| DS (Frontend/video) | D1 | D2, D3, D4, D5, part of D7 (built, adapted to `e1732c1` and tested locally, **not yet committed**) | D6, rest of D7 |
+| Ahmed (Product) | H1 | H3 (test verification and tests done; still 70 combined code points, not 50 + 20) | H2, H4, H5, H6 |
 
 **Handoffs waiting right now:**
-- **DS ↔ Aalia (A4/D2):** DS to review and sign off `backend/RUNNER_CONTRACT.md`. Test ids are `ex0`, `ex1`, …, and `input` is a list of positional args.
-- **Ahmed → Aalia (H1):** the backend seeds 1 placeholder question plus 3 template variants. It needs Ahmed's 6 vetted problems with transfer pairs.
-- **Ahmed → Aalia (H3):** `backend/app/scoring.py` is a temporary stand-in. It scales 70 code points from the example tests, not the planned 50 functional + 20 edge split. Swap in Ahmed's `scoring.py` when it's ready.
+- **DS → Ahmed and Aalia:** tell them main's frontend is being replaced by D2–D5.
+  - Ahmed's `python.worker.js` and his `pyodideRunner.ts` are retired, along with his versions of `StudentPage.tsx`, `TeacherPage.tsx` and `client.ts`.
+  - Everything his pages did is covered, plus Python preloading, per-test timeouts, import blocking, `Idempotency-Key`, the hint ladder, "Use this plan" and teacher audit history.
+  - His Vite `/api` proxy and his scoring contract are kept.
+- **DS ↔ Aalia (A4):** `backend/RUNNER_CONTRACT.md` is rewritten in DS's working tree to describe the runner that actually ships. It uses Aalia's `a4-runner-sync` structure and scoring section. Aalia's branch describes Ahmed's runner (12 s timeout, no preloading or import blocking), so it should not be merged as is.
+- **Ahmed → Aalia (H3):** the 50 functional + 20 edge split isn't implemented. The bank has 3 hidden tests per question, but they aren't run (no trusted server runner).
 - **Shreya:** run `python -m evals.gold_grading` with the API key and record the agreement counts. Get human approval of the expected ranges before citing them.
+
+## Frontend ↔ backend follow-ups
+
+**Done:**
+- [x] **Backend merge (PR #3):** contracts unchanged. Per-skill snapshot fields were added to `contracts.ts`. The teacher view says mastery updates when the student moves on.
+- [x] **Local setup:** the backend runs from `backend/`, and the temporary worktree is removed.
+- [x] **Ahmed's `e1732c1`, adapted:**
+  - **Runner:** ids are now `example-1` … `example-N`, and a pass needs the same type and value. This matches `scoring.py`; `True` and `1.0` no longer pass for `1`.
+  - **API base:** `VITE_API_BASE_URL`, or its alias `VITE_API_URL`. Empty means same origin, through his Vite `/api` proxy. The proxy is kept and the ES-module worker setting is added.
+  - **CI:** the step that checked `python.worker.js` is replaced by `npm run lint` and `py_compile` of `src/runner/harness.py`.
+- [x] **Tests against `e1732c1`:**
+  - `validate_bank`: VALID.
+  - `smoke_e2e` 35, `smoke_failures` 29 and `smoke_persistence` all pass.
+  - pytest: 34 pass, including Ahmed's `test_scoring_integrity`.
+  - **Browser:**
+    - A correct answer scores 70/70 code points under the strict scoring.
+    - The runner edge cases behave correctly: timeout, `True` for an int, exceptions and a blocked import.
+    - The student flow works through to the transfer partner ("Count positive numbers"), and the teacher override and audit history work.
+    - Completion after 8 questions works.
+    - No private fields appear in any response.
+- [x] **`backend/RUNNER_CONTRACT.md`:** rewritten to describe what ships (marked as DS sign-off), pending Aalia's OK.
+
+**Still open:**
+- [ ] **DS: commit and open a PR** (local branch `feat/d2-pyodide`, now level with `main` at `e1732c1`).
+  - It deletes Ahmed's `python.worker.js`, `mocks/question.ts` and `stubRunner.ts`.
+  - It replaces his `StudentPage.tsx`, `TeacherPage.tsx`, `client.ts` and `pyodideRunner.ts`.
+  - It edits his CI workflow.
+- [ ] **Aalia:** OK the new `RUNNER_CONTRACT.md`. Drop or rebase `backend/a4-runner-sync`. Its `scoring.py` docstring update is still worth keeping.
+- [ ] **Deployment (A5/D6):**
+  - Frontend host: set `VITE_API_BASE_URL` to the deployed backend URL.
+  - Backend host: set `ALLOWED_ORIGINS` to the deployed frontend URL.
+- [ ] **Frontend copies of backend values:** if any of these change in the backend, update the frontend file named.
+  - Score maxima, code 70 and concept 30: `AttemptResult.tsx`, `ReviewForm.tsx`, `AttemptDetails.tsx`.
+  - Labels for flags, assist `reason_code`s, next reasons and stages: `frontend/src/student/labels.ts`.
+  - Runner id and pass rule: `frontend/src/runner/harness.py`, which must match `backend/app/scoring.py`.
+- [ ] **Aalia/Ahmed: hidden tests.** When they start being run server-side, the frontend copy "Your code score currently comes from these example tests" (`QuestionPanel.tsx`) and the result-card flag labels need updating. Tell DS.
+- [ ] **Ahmed: 50 + 20 split (H3).** If it's exposed separately, tell DS so the result card and dashboard can show it. Right now there's one combined code score out of 70.
 
 ## Mission
 Build a real-time university Python assessment prototype that permits approved informational AI support but tests actual independent conceptual understanding. It must show a coding editor, execution, rubric-based grading by a separate AI, dynamic challenge variants, Plan Mode, a learner-state model, progressive difficulty, and a teacher dashboard with human review.
@@ -112,17 +156,18 @@ A separate tab labelled **Plan Mode** next to Code and Reference. Student submit
 
 ### Aalia / Backend
 - ✅ **A1 P0 (18:20-18:50):** scaffold FastAPI, CORS for frontend, Pydantic contracts, OpenAPI, `.env.example`. Done: `/health` and `/api/session/start` work from a shared branch.
-  - *Status:* on `backend/a3-endpoints`, **not merged to main**.
+  - *Status:* merged to `main` (PR #3).
 - ✅ **A2 P0 (18:50-19:45):** persistence and session-state CRUD; choose Supabase Postgres if configured within 25 minutes, else SQLite fallback. Tables: sessions, problems, attempts, assistance_events, evaluations, mastery_state, teacher_reviews. Done: full run persists and reloads without errors; no public credentials.
-  - *Status:* SQLite with all 7 tables, `GET /api/session/{id}` reload and `scripts/smoke_persistence.py`. Aligned with `cognit_ai`. **Not merged.**
+  - *Status:* SQLite with all 7 tables, `GET /api/session/{id}` reload and `scripts/smoke_persistence.py`. Aligned with `cognit_ai`. Merged (PR #3).
 - ✅ **A3 P0 (19:45-20:30):** orchestration endpoints `/api/attempt`, `/api/next`, `/api/assist`, `/api/teacher/session` integrating Shreya services. Done: integration smoke script shows end-to-end JSON.
-  - *Status:* all endpoints are in place. `scripts/smoke_e2e.py` runs 35 checks, including leak checks. **Not merged.**
+  - *Status:* all endpoints are in place. `scripts/smoke_e2e.py` runs 35 checks, including leak checks. Merged (PR #3).
 - 🟡 **A4 P0 (20:30-21:15):** coordinate Pyodide Web Worker contract with DS, define code/test execution data, timeouts, errors. NEVER execute student code in backend host process. Done: normal, infinite-loop and exception cases produce bounded and readable results.
   - *Status:* draft contract in `backend/RUNNER_CONTRACT.md`.
-  - *Remaining:* DS sign-off and answers to its 2 open questions. Proving the infinite-loop and exception cases needs DS's D2 worker.
+  - *Remaining:* DS's sign-off and answers to its 2 open questions.
+  - *Evidence:* DS's D2 worker (local, uncommitted) handles the normal, infinite-loop and exception cases with bounded, readable results.
 - 🟡 **A5 P0 (21:15-22:00):** teacher override endpoint with audit log and deployment. Done: public staging health works and a full session appears after reload.
-  - *Status:* `POST /api/teacher/review` with an append-only audit log is done.
-  - *Remaining:* deploy to public staging, or decide on a local-only demo.
+  - *Status:* `POST /api/teacher/review` with an append-only audit log is done. A root `Dockerfile` and a deploy guide (`backend/README.md`, "Deploy") are ready.
+  - *Remaining:* deploy to public staging, with a persistent disk for SQLite, or decide on a local-only demo.
 - ✅ **A6 P1:** reliability, short model timeout, retry budget, idempotent attempt submission and rate limiting; cost-guard provider usage.
   - *Status:* `Idempotency-Key` on attempt, per-session rate limits and AI call caps (`app/limits.py`), a 12 s model timeout and 1 retry (`cognit_ai/provider.py`).
 - **Deviation:** if backend cloud hosting blocked >30 min, run locally and record demo. If Supabase blocked >25 min, SQLite local. Never add authentication late at cost of core flow.
@@ -130,27 +175,37 @@ A separate tab labelled **Plan Mode** next to Code and Reference. Student submit
 ### DS / Frontend & video
 - ✅ **D1 P0 (18:20-19:00):** bootstrap React/Vite TS frontend with `/student` and `/teacher`, Monaco editor, accessible Run/Submit UI, typing and mobile-safe layout. Done: an unconnected editor runs locally with mock question.
   - *Status:* on main, with a TS contract mirror in `frontend/src/types/contracts.ts`.
-- ⬜ **D2 P0 (19:00-19:45):** browser Pyodide Web Worker for running Python and public tests. Handle loading, errors, infinite loops (terminate worker and recreate), disallowed imports and timeouts; do not market as secure production sandbox. Done: 3 example snippets tested.
-  - *Status:* only `stubRunner.ts` exists. Build to `backend/RUNNER_CONTRACT.md`: ids `ex0`, …, calls `fn(*input)`, 2 s per test and 5 s per run, `BLOCKED_IMPORT`/`TIMEOUT` error strings. **Not blocked.**
-- ⬜ **D3 P0 (19:45-20:30):** integrate session/start, attempt, next, code execution; add visible progress, points, upcoming question, explanations. Done: one complete question on backend.
-  - *Status:* can start now against the `backend/a3-endpoints` branch run locally. Send an `Idempotency-Key` on Submit.
-- ⬜ **D4 P0 (20:30-21:00):** assistance UI with Lookup / Plan Mode / Hint and refusal messages; show allowed source citations. Done: recorded hint after attempt and denied solution request.
-  - *Status:* tabs exist as placeholders. Endpoint `/api/assist` exists on the backend branch.
-- ⬜ **D5 P0 (21:00-21:40):** teacher dashboard with scores, skill labels, assisted/independent comparison, attempt log, teacher override UI. Done: actual stored data reflected, not fake metrics.
-  - *Status:* static shell only. The endpoints exist on the backend branch.
+- 🟡 **D2 P0 (19:00-19:45):** browser Pyodide Web Worker for running Python and public tests. Handle loading, errors, infinite loops (terminate worker and recreate), disallowed imports and timeouts; do not market as secure production sandbox. Done: 3 example snippets tested.
+  - *Status:* **built and tested locally, not committed.** A Pyodide Web Worker runner (`frontend/src/runner/`) implements `RUNNER_CONTRACT.md`, adapted to Ahmed's scoring: `example-N` ids and a type-exact pass. It replaces the interim `python.worker.js` from `e1732c1`.
+  - *Tested in a real browser:* correct and wrong answers, `while True` (terminated at 2 s, page stays responsive), exceptions with traceback, syntax errors, a missing function, `import os` blocked, and `print()`. Covers E2E tests #6 and #7.
+- 🟡 **D3 P0 (19:45-20:30):** integrate session/start, attempt, next, code execution; add visible progress, points, upcoming question, explanations. Done: one complete question on backend.
+  - *Status:* **built and tested locally against the backend on `main`, not committed.**
+  - *Covers:* session start, resume after refresh (drafts kept), Submit with `Idempotency-Key`, the score card, flags, next action, Next question with a reason banner, and the completion screen. Covers E2E test #14 (refresh).
+- 🟡 **D4 P0 (20:30-21:00):** assistance UI with Lookup / Plan Mode / Hint and refusal messages; show allowed source citations. Done: recorded hint after attempt and denied solution request.
+  - *Status:* **built and tested locally, not committed.**
+  - *Covers:* Reference lookup with docs citations, a refused solution request, hints locked before the first attempt (ladder of 3), and Plan Mode with "Use this plan" (sent with the next attempt). Help events are logged. Covers E2E tests #8–#10.
+  - *Not yet seen:* real Claude tutor output (AI was off locally).
+- 🟡 **D5 P0 (21:00-21:40):** teacher dashboard with scores, skill labels, assisted/independent comparison, attempt log, teacher override UI. Done: actual stored data reflected, not fake metrics.
+  - *Status:* **built and tested locally, not committed.**
+  - *Covers:* review queue, weighted score breakdown, assisted vs independent with transfer gap, mastery by skill (heuristic), attempt log (code, explanation, plan, tests, rubric), help log, and the override/approve form with append-only audit history. Covers E2E test #15.
 - ⬜ **D6 P0 (21:40-22:20):** capture a <=2-min video of one real student run, show human review and new question. Use captions and truthful 'sped-up' labels; export, upload, verify playback. Send link to Ahmed.
   - *Status:* blocked on the end-to-end flow (D2–D5 and the backend merge).
-- ⬜ **D7 P1:** Figma sketch/design polish if stable, keyboard shortcuts, good typography and loading skeletons.
-  - *Status:* Ctrl/Cmd+Enter to run already works.
+- 🟡 **D7 P1:** Figma sketch/design polish if stable, keyboard shortcuts, good typography and loading skeletons.
+  - *Status:* Ctrl/Cmd+Enter runs and Ctrl/Cmd+Shift+Enter submits (local, not committed). There are loading states, but no skeletons or design polish yet.
 - **Deviation:** if Monaco or Pyodide takes >30 min, use CodeMirror or plain multiline code editor with browser Python via already proven package. Never replace working demo with risky late redesign.
 
 ### Ahmed / Product, tests, integration, submission
-- ⬜ **H1 P0 (18:20-18:45):** write 6 carefully checked Python problems over 3 skills: hashing, loops/edge cases, basic algorithmic complexity; each has public prompt, 3 normal tests, 3 edge cases, misconception target, conceptual rubric, paired transfer problem. Verify input/output specs.
-  - *Status:* not in the repo. The backend uses 1 placeholder (`first_unique`) plus 3 of Shreya's template variants (`backend/app/data/questions.py`). Use positional-arg-list `input`.
+- ✅ **H1 P0 (18:20-18:45):** write 6 carefully checked Python problems over 3 skills: hashing, loops/edge cases, basic algorithmic complexity; each has public prompt, 3 normal tests, 3 edge cases, misconception target, conceptual rubric, paired transfer problem. Verify input/output specs.
+  - *Status:* `backend/app/data/bank.json` (in `e1732c1`) has 6 vetted questions in 3 transfer pairs:
+    - loops, L1: `count_even` → `count_positive`;
+    - complexity, L2: `sum_even` → `sum_positive`;
+    - hashing, L3: `has_duplicate` → `count_distinct`.
+  - Each question has 3 example and 3 hidden tests. Sessions start on `demo_count_even`. `validate_bank.py` reports VALID.
 - ⬜ **H2 P0 (18:45-19:15):** make golden evaluation examples: strong correct solution, partial understanding, syntax bug with sound concept, passing code with weak explanation, prompt-leak request, infinite-loop code. Provide expected points/flags and review cases.
   - *Status:* not in the repo. Shreya's `evals/gold_grading.py` already covers the explanation-only cases and could be extended.
-- ⬜ **H3 P0 (19:15-20:00):** own `scoring.py` with documented point weights/difficulty weighting and simple deterministic tests. Coordinate with Shreya's grader schema. Done: boundary test scores exactly 0/100, mixed scores correct, no double-counting.
-  - *Status:* not in the repo. Aalia's temporary stand-in is `backend/app/scoring.py`: swap in `score_attempt` and `effective_score`.
+- 🟡 **H3 P0 (19:15-20:00):** own `scoring.py` with documented point weights/difficulty weighting and simple deterministic tests. Coordinate with Shreya's grader schema. Done: boundary test scores exactly 0/100, mixed scores correct, no double-counting.
+  - *Status:* `summarise_tests` in `backend/app/scoring.py` now verifies each `example-N` result: it must appear exactly once, and `actual` must have the expected type and value. `tests/test_scoring_integrity.py` covers it: 100/100 for a correct report, no credit for invented values, and duplicates fail closed.
+  - *Remaining:* the 50 functional + 20 edge split; code is still one 70-point score scaled from the example tests.
 - ⬜ **H4 P0 (20:00-21:00):** end-to-end QA from student perspective, fixed blocker list with P0/P1, run 4 team attempts, note observed outcomes rather than inventing performance claims.
   - *Status:* needs D2–D5 and the backend merge.
 - ⬜ **H5 P0 (21:00-22:00):** prepare research-backed rationale, Devpost description, README instructions, model and data limitations, project architecture drawing in markdown, 6-minute Q&A answers.

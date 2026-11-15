@@ -6,21 +6,26 @@ interface CodeEditorProps {
   onChange: (value: string) => void
   /** Ctrl/Cmd+Enter inside the editor. */
   onRun?: () => void
+  /** Ctrl/Cmd+Shift+Enter inside the editor. */
+  onSubmit?: () => void
 }
 
 /**
  * Monaco (Python). Uses @monaco-editor/react's default CDN loader.
  * Fallback if offline loading fails: bundle via loader.config({ monaco }).
  */
-export function CodeEditor({ value, onChange, onRun }: CodeEditorProps) {
+export function CodeEditor({ value, onChange, onRun, onSubmit }: CodeEditorProps) {
   // Keep latest callback without re-registering the Monaco command.
   const runRef = useRef(onRun)
+  const submitRef = useRef(onSubmit)
   useEffect(() => {
     runRef.current = onRun
-  }, [onRun])
+    submitRef.current = onSubmit
+  }, [onRun, onSubmit])
 
   const handleMount: OnMount = (editor, monaco) => {
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => runRef.current?.())
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.Enter, () => submitRef.current?.())
   }
 
   return (
@@ -41,7 +46,7 @@ export function CodeEditor({ value, onChange, onRun }: CodeEditorProps) {
           insertSpaces: true,
           automaticLayout: true,
           wordWrap: 'on',
-          ariaLabel: 'Python code editor. Press Control or Command plus Enter to run.',
+          ariaLabel: 'Python code editor. Press Control or Command plus Enter to run, add Shift to submit.',
           accessibilitySupport: 'auto',
         }}
       />

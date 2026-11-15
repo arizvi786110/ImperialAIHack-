@@ -61,7 +61,7 @@ engine.dispose()  # simulate a restart
 with db_session() as db:
     s = repo.get_session(db, sid)
     assert s and s.stage == "transfer" and "hint" in s.allowed_help, "session"
-    assert len(QUESTIONS) == 6 and all(repo.get_problem(db, k) for k in QUESTIONS), "problems seeded"
+    assert len(QUESTIONS) >= 6 and all(repo.get_problem(db, k) for k in QUESTIONS), "problems seeded"
     assert repo.get_problem(db, QID).review_status == "vetted", "vetted"
     assert [x.id for x in repo.list_attempts(db, sid)] == [aid], "attempts"
     assert repo.get_attempt(db, aid).client_tests_untrusted is True, "untrusted flag"

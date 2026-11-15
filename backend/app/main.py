@@ -1,5 +1,7 @@
 import sys
 import os
+import logging
+import os
 import hmac
 from pathlib import Path
 
@@ -23,6 +25,13 @@ from .routes import assist, attempt, health, next, session, teacher, probe, lab 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     repo.init_db(QUESTIONS)
+    if os.getenv("COGNIT_DIAGNOSTIC_ON_START", "false").lower() == "true":
+        try:
+            from cognit_ai.provider import ask
+            result = ask("Reply with READY only.", {"test":"startup"}, model=os.getenv("COGNIT_LAB_MODEL", "claude-sonnet-4-6"), max_tokens=32)
+            logging.getLogger("cognit.health").warning("COGNIT_AI_SMOKE result=%s", "success" if result.strip() else "empty_response")
+        except Exception as exc:
+            logging.getLogger("cognit.health").warning("COGNIT_AI_SMOKE result=failed type=%s", type(exc).__name__)
     yield
 
 app = FastAPI(title="COGNIT API", version="0.2.0", lifespan=lifespan)

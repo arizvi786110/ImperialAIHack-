@@ -11,10 +11,14 @@ interface SessionGateProps {
 export function SessionGate({ onStart, busy, error }: SessionGateProps) {
   const aliasId = useId()
   const [alias, setAlias] = useState('')
+  const [accessCode, setAccessCode] = useState(() => sessionStorage.getItem('cognit-demo-code') ?? '')
 
   function submit(e: SubmitEvent) {
     e.preventDefault()
-    if (alias.trim()) onStart(alias.trim())
+    if (alias.trim()) {
+      if (accessCode.trim()) sessionStorage.setItem('cognit-demo-code', accessCode.trim())
+      onStart(alias.trim())
+    }
   }
 
   return (
@@ -52,6 +56,10 @@ export function SessionGate({ onStart, busy, error }: SessionGateProps) {
           <p id={`${aliasId}-hint`} className="text-xs text-slate-500">
             Demo only: please don't use your real name.
           </p>
+          <label htmlFor="cognit-code" className="text-sm font-semibold text-slate-900">Team demo access code</label>
+          <input id="cognit-code" type="password" autoComplete="off" value={accessCode} onChange={e => setAccessCode(e.target.value)}
+            className={input} placeholder="Provided by your team" />
+          <p className="text-xs text-slate-500">Needed for the shared hosted demo. Never enter an API key here.</p>
           {error && <ErrorBanner message={error} />}
           <button type="submit" disabled={busy || !alias.trim()} className={`${btn.primary} w-full`}>
             {busy ? 'Starting…' : 'Start'}

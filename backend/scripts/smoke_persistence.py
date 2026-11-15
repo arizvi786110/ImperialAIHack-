@@ -32,7 +32,7 @@ QID = STARTING_QUESTION_ID
 with db_session() as db:
     q = repo.get_problem(db, QID)
     s = repo.create_session(db, "smoke", QID, SessionState(stage="attempt", difficulty=1, allowed_help=["lookup"]))
-    a = repo.add_attempt(db, session_id=s.id, question_id=QID, code="def first_unique(s): return -1",
+    a = repo.add_attempt(db, session_id=s.id, question_id=QID, code="def count_target(values, target): return 0",
                          explanation="count each char then scan for the first with count 1",
                          client_test_results=[{"id": "t1", "pass": False}])
 
@@ -61,7 +61,7 @@ engine.dispose()  # simulate a restart
 with db_session() as db:
     s = repo.get_session(db, sid)
     assert s and s.stage == "transfer" and "hint" in s.allowed_help, "session"
-    assert len(QUESTIONS) == 4 and all(repo.get_problem(db, k) for k in QUESTIONS), "problems seeded"
+    assert len(QUESTIONS) == 6 and all(repo.get_problem(db, k) for k in QUESTIONS), "problems seeded"
     assert repo.get_problem(db, QID).review_status == "vetted", "vetted"
     assert [x.id for x in repo.list_attempts(db, sid)] == [aid], "attempts"
     assert repo.get_attempt(db, aid).client_tests_untrusted is True, "untrusted flag"
@@ -71,8 +71,9 @@ with db_session() as db:
     assert ev and ev.review_required and "GRADER_UNAVAILABLE" in ev.flags and "client_tests_untrusted" in ev.flags, "evaluations"
     ls = repo.load_learner_state(s)
     assert reason == "transfer" and ls.pending_transfer and QID in ls.seen_question_ids, "learner_state round-trip"
+    assert ls.skill_progress["loops"].pending_transfer_from == QID and ls.skill_progress["loops"].evidence, "per-skill progress round-trip"
     m = repo.get_mastery(db, sid)
-    assert len(m) == 1 and m[0].skill == "hashing" and m[0].assisted_mean == 85.0, "mastery_state"
+    assert len(m) == 1 and m[0].skill == "loops" and m[0].assisted_mean == 85.0, "mastery_state"
     r = repo.list_teacher_reviews(db, aid)
     assert len(r) == 1 and r[0].override_concept_score == 24, "teacher_reviews"
 
@@ -95,10 +96,11 @@ for b in bodies[:3]:  # real responses (openapi.json is schema only)
     for private in ("reference_solution", "hidden_tests", "rubric", "concept_key", "transfer_id"):
         assert private not in b, f"private field {private} leaked to client"
 
-tracked = subprocess.run(["git", "ls-files"], cwd=REPO, capture_output=True, text=True).stdout.split()
+tracked = subprocess.run(["git", "ls-files"], cwd=REPO, capture_output=True, text=True).stdout.splitlines()
 assert not [f for f in tracked if f.endswith(".env") or f.endswith(".db")], ".env or .db is tracked by git"
-hits = subprocess.run(["git", "grep", "-lE", r"sk-ant-[A-Za-z0-9_-]{20,}"], cwd=REPO, capture_output=True, text=True).stdout
-assert hits.strip() in ("", "backend/scripts/smoke_persistence.py"), f"possible real key committed in: {hits}"
+hits = subprocess.run(["git", "grep", "-nE", r"sk-ant-[A-Za-z0-9_-]{20,}"], cwd=REPO, capture_output=True, text=True).stdout
+real = [h.split(":")[0] for h in hits.splitlines() if "SENTINEL" not in h]  # test scripts use fake SENTINEL keys
+assert not real, f"possible real key committed in: {real}"
 
 engine.dispose()
 print(f"OK: 7 tables persisted + reloaded with real cognit_ai services; no key leaks ({tmp})")

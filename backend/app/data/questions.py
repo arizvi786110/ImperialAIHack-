@@ -1,57 +1,21 @@
 """Question bank seeded into the `problems` table at startup.
 
-- Placeholder hand-written question (replace with Ahmed's vetted H1 bank).
-- Shreyaa's vetted parametrised variants (cognit_ai.question_variants), one per level.
+Shreyaa's 6 vetted templates (cognit_ai.question_variants): 2 per skill
+(loops = level 1, hashing = level 2, complexity = level 3), each with an approved
+transfer partner. Replace/extend with Ahmed's vetted H1 bank when it lands; note
+make_transfer_variant() only works for template-based questions.
 
-Test `input` is a list of positional args: first_unique("aab") -> input=["aab"].
+Test `input` is a list of positional args: count_target([1, 2], 2) -> input=[[1, 2], 2].
 """
 
-from cognit_ai.question_variants import safe_variant
-from contracts.models import PrivateQuestion, TestCase
+from cognit_ai.question_variants import TEMPLATES, safe_variant
+from contracts.models import PrivateQuestion
 
-PLACEHOLDER = PrivateQuestion(
-    id="q_first_unique_char",
-    seed=0,
-    skill_tags=["hashing"],
-    difficulty=1,
-    title="First unique character",
-    statement=(
-        "Return the index of the first character in `s` that appears exactly once. "
-        "Return -1 if there is none."
-    ),
-    function_signature="def first_unique(s: str) -> int:",
-    example_tests=[
-        TestCase(input=["leetcode"], expected=0),
-        TestCase(input=["aabb"], expected=-1),
-    ],
-    hint_policy="Conceptual help only; no solution code.",
-    max_points=100,
-    reference_solution=(
-        "from collections import Counter\n"
-        "def first_unique(s):\n"
-        "    c = Counter(s)\n"
-        "    for i, ch in enumerate(s):\n"
-        "        if c[ch] == 1:\n"
-        "            return i\n"
-        "    return -1\n"
-    ),
-    rubric={
-        "core_idea": "Count character frequencies, then scan in order for the first count of 1.",
-        "complexity": "O(n) time, O(k) extra space vs O(n^2) nested scan.",
-        "edge_cases": "Empty string, all characters repeated, single character.",
-    },
-    hidden_tests=[
-        TestCase(input=[""], expected=-1),
-        TestCase(input=["z"], expected=0),
-        TestCase(input=["aabbc"], expected=4),
-    ],
-    concept_key="frequency_count_then_scan",
-    transfer_id=None,
-    review_status="vetted",
-)
+BANK_SEED = 42
 
-_VARIANTS = [safe_variant(t, seed=42) for t in ("count_target", "unique_count", "first_repeat")]
+_bank = [safe_variant(template_id, BANK_SEED) for template_id in TEMPLATES]
 
-QUESTIONS: dict[str, PrivateQuestion] = {q.id: q for q in [PLACEHOLDER, *_VARIANTS]}
+QUESTIONS: dict[str, PrivateQuestion] = {q.id: q for q in _bank}
 
-STARTING_QUESTION_ID = PLACEHOLDER.id
+# Start at level 1 (loops).
+STARTING_QUESTION_ID = next(q.id for q in _bank if q.id.startswith("count_target-"))

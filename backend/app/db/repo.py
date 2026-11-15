@@ -1,11 +1,12 @@
 """Data access layer. Endpoints (A3) call these; nothing else touches ORM rows."""
 
+from dataclasses import asdict
 from typing import Any, Optional
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from cognit_ai.adapt import Evidence, LearnerState
+from cognit_ai.adapt import Evidence, LearnerState, SkillProgress
 from contracts.models import ConceptGrade, PrivateQuestion, SessionState
 
 from .database import Base, db_session, engine
@@ -104,17 +105,27 @@ def load_learner_state(row: SessionRow) -> LearnerState:
         independent_streak=d["independent_streak"],
         last_skill=d["last_skill"],
         seen_question_ids=set(d["seen_question_ids"]),
+        skill_progress={
+            skill: SkillProgress(
+                difficulty=p["difficulty"],
+                independent_streak=p["independent_streak"],
+                pending_transfer_from=p["pending_transfer_from"],
+                evidence=[Evidence(**e) for e in p["evidence"]],
+            )
+            for skill, p in d.get("skill_progress", {}).items()
+        },
     )
 
 
 def save_learner_state(db: Session, row: SessionRow, state: LearnerState) -> None:
     row.learner_state = {
         "difficulty": state.difficulty,
-        "evidence": [vars(e) for e in state.evidence],
+        "evidence": [asdict(e) for e in state.evidence],
         "pending_transfer": state.pending_transfer,
         "independent_streak": state.independent_streak,
         "last_skill": state.last_skill,
         "seen_question_ids": sorted(state.seen_question_ids),
+        "skill_progress": {skill: asdict(p) for skill, p in state.skill_progress.items()},
     }
     row.difficulty = state.difficulty
     sync_mastery(db, row.id, state.snapshot())

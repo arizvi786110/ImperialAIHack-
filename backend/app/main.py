@@ -18,7 +18,7 @@ from contextlib import asynccontextmanager  # noqa: E402
 from .config import settings  # noqa: E402
 from .data.questions import QUESTIONS  # noqa: E402
 from .db import repo  # noqa: E402
-from .routes import assist, attempt, health, next, session, teacher, probe  # noqa: E402
+from .routes import assist, attempt, health, next, session, teacher, probe, lab  # noqa: E402
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
@@ -54,7 +54,7 @@ async def validation_error(_: Request, exc: RequestValidationError) -> JSONRespo
 async def unhandled_error(_: Request, exc: Exception) -> JSONResponse:
     return _error(500, "INTERNAL_ERROR", "Unexpected server error")
 
-for router in (health, session, attempt, assist, next, teacher, probe):
+for router in (health, session, attempt, assist, next, teacher, probe, lab):
     app.include_router(router.router)
 
 # The production Docker image includes the Vite build here. Local development

@@ -19,6 +19,10 @@ DEFAULT_SQLITE_URL = f"sqlite:///{(BACKEND_DIR / 'cognit.db').as_posix()}"
 DATABASE_URL = settings.database_url or DEFAULT_SQLITE_URL
 IS_SQLITE = DATABASE_URL.startswith("sqlite")
 
+if IS_SQLITE and ":memory:" not in DATABASE_URL:
+    # e.g. sqlite:////data/cognit.db on a host's persistent disk: make sure the folder exists.
+    Path(DATABASE_URL.split("sqlite:///", 1)[1]).parent.mkdir(parents=True, exist_ok=True)
+
 engine = create_engine(
     DATABASE_URL,
     connect_args={"check_same_thread": False} if IS_SQLITE else {},

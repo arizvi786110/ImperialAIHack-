@@ -152,3 +152,16 @@ class ConceptProbeRow(Base):
     needs_review: Mapped[bool] = mapped_column(Boolean, default=False)
     model_used: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+
+class SocraticLabRow(Base):
+    """One bounded conceptual interview, independent from the Python assessment."""
+    __tablename__ = "socratic_labs"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    student_alias: Mapped[str] = mapped_column(String(64))
+    skill: Mapped[str] = mapped_column(String(24))
+    current_question: Mapped[str] = mapped_column(Text)
+    history: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list)
+    turn: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now, onupdate=_now)

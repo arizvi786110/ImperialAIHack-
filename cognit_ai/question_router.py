@@ -44,7 +44,7 @@ def propose(*, skill: str, difficulty: int, previous_question: str,
         "concept_interview_score": probe_score,
     }
     try:
-        result = ask(ROUTER_SYSTEM, payload, model=os.getenv("COGNIT_PROBE_MODEL", "claude-haiku-4-5"), max_tokens=110)
+        result = ask(ROUTER_SYSTEM, payload, model=os.getenv("COGNIT_PROBE_MODEL", "claude-haiku-5-5"), max_tokens=110)
         choice = json.loads(result)
         if isinstance(choice, dict) and choice.get("template_id") in options:
             return choice["template_id"], str(choice.get("reason", ""))[:150]

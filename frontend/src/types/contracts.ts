@@ -305,3 +305,13 @@ export interface ConceptProbe {
   needs_review: boolean
   model_used: string | null
 }
+
+export interface TeacherRosterEntry {
+  session_id: string
+  student_alias: string
+  stage: string
+  difficulty: number
+  questions_served: number
+  attempt_count: number
+  created_at: string
+}

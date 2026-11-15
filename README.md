@@ -361,9 +361,9 @@ Created for the **Imperial AI Hackathon 2026**, **Reply Challenge: AI on Campus*
 | Area | Team ownership |
 | --- | --- |
 | Product direction, problem bank, evaluation, integration and submission | **Ahmed** |
-| AI/ML: tutoring, conceptual grading, adaptive learning and vetted question variants | **Shreya** |
+| AI/ML: tutoring, conceptual grading, adaptive learning and vetted question variants | **Shreyaa** |
 | FastAPI backend, persistence, endpoints and execution integration | **Aalia** |
-| React frontend, coding experience and demo video | **DS** |
+| React frontend, coding experience and demo video | **Debangshu** |
 
 The team's master execution plan is available in [`MASTER_PLAN.md`](MASTER_PLAN.md). Roles above describe assigned ownership; the repository is the source of truth for the delivered implementation.
 

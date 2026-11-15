@@ -283,3 +283,19 @@ export interface TeacherReviewResponse {
   review_status: ReviewStatus
   effective_score: number
 }
+
+
+// Extra evidence of reasoning. Separate from the original 100-point score.
+export interface ConceptProbe {
+  probe_id: string
+  attempt_id: string
+  question: string
+  source: string
+  answered: boolean
+  answer: string | null
+  score: number | null
+  confidence: number | null
+  rationale: string | null
+  needs_review: boolean
+  model_used: string | null
+}

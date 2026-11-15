@@ -4,10 +4,54 @@ on:
   push:
     branches:
       - 'integration/**'
+      - 'deployment/**'
   pull_request:
   workflow_dispatch:
 
 jobs:
+  hosted-app:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      COGNIT_AI_ENABLED: 'false'
+      ANTHROPIC_API_KEY: ''
+      PYTHONPATH: .
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: npm install --no-audit --no-fund
+        working-directory: frontend
+      - run: npm run build
+        working-directory: frontend
+      - run: python -m pip install -r backend/requirements.txt -r requirements.txt
+      - run: python -m pytest -q tests/test_hosted_spa.py
+      - run: docker build -t cognit-team-demo .
+      - name: Boot and probe complete Docker app
+        run: |
+          docker run --rm -d --name cognit-probe -p 18000:8000 \
+            -e DATABASE_URL=sqlite:////data/cognit.db \
+            -e COGNIT_AI_ENABLED=false cognit-team-demo
+          for i in $(seq 1 25); do
+            if curl --fail --silent http://127.0.0.1:18000/health; then break; fi
+            sleep 1
+          done
+          curl --fail --silent http://127.0.0.1:18000/student | grep -qi 'html'
+          curl --fail --silent http://127.0.0.1:18000/teacher | grep -qi 'html'
+          curl --fail --silent -X POST http://127.0.0.1:18000/api/session/start \
+            -H 'Content-Type: application/json' \
+            -d '{"student_alias":"CI Team"}' | grep -q '"ok":true'
+      - name: Show Docker logs and stop container
+        if: always()
+        run: |
+          docker logs --tail 80 cognit-probe 2>/dev/null || true
+          docker stop cognit-probe 2>/dev/null || true
   frontend:
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -42,4 +86,4 @@ jobs:
       - run: python backend/scripts/smoke_e2e.py
       - run: python backend/scripts/smoke_persistence.py
       - run: python backend/scripts/smoke_failures.py
-      - run: python -m pytest -q tests --ignore=tests/test_live_tutor.py
+      - run: python -m pytest -q tests --ignore=tests/test_live_tutor.py --ignore=tests/test_hosted_spa.py

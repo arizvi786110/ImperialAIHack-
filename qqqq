@@ -1,0 +1,14 @@
+cognit_ai/__init__.py
+cognit_ai/adapt.py
+cognit_ai/contracts.py
+cognit_ai/grader_service.py
+cognit_ai/provider.py
+cognit_ai/question_variants.py
+cognit_ai/tutor_service.py
+evals/__init__.py
+evals/adversarial_eval.py
+evals/gold_grading.py
+examples/backend_integration.py
+examples/contracts.json
+requirements.txt
+tests/test_services.py

@@ -5,6 +5,24 @@
 **Hard deadline:** 15 November 2026, 12:00 GMT. Internal target: 11:15 GMT.
 **Ownership:** Product lead = Ahmed; AI/ML = Shreya; Backend/runner = Aalia; Frontend/video = DS.
 
+## Status board (updated 15 Nov 2026, from repo contents on `main` and all remote branches)
+Legend: ✅ Done · 🟡 Partly done / needs follow-up · ⬜ To do. Status is judged only from what's in the repo. Work done but not pushed doesn't show here; update your own row if so.
+
+> **Not on `main` yet:** all backend work (A1–A6) is only on `origin/backend/a3-endpoints` (which also contains `backend/a2-persistence`). **Aalia: open a PR from `backend/a3-endpoints` to `main`.** Until it merges, `main` has no `backend/` or `contracts/`.
+
+| Owner | Done | Partly done | To do |
+|---|---|---|---|
+| Shreya (AI/ML) | S1, S2, S3 (code), S4, S5 | S3 live gold run, S6 | none |
+| Aalia (Backend) | A1, A2, A3, A6 (all unmerged) | A4 (needs DS sign-off), A5 (deployment) | merge to `main` |
+| DS (Frontend/video) | D1 | none | D2, D3, D4, D5, D6, D7 |
+| Ahmed (Product) | none | none | H1, H2, H3, H4, H5, H6 |
+
+**Handoffs waiting right now:**
+- **DS ↔ Aalia (A4/D2):** DS to review and sign off `backend/RUNNER_CONTRACT.md`. Test ids are `ex0`, `ex1`, …, and `input` is a list of positional args.
+- **Ahmed → Aalia (H1):** the backend seeds 1 placeholder question plus 3 template variants. It needs Ahmed's 6 vetted problems with transfer pairs.
+- **Ahmed → Aalia (H3):** `backend/app/scoring.py` is a temporary stand-in. It scales 70 code points from the example tests, not the planned 50 functional + 20 edge split. Swap in Ahmed's `scoring.py` when it's ready.
+- **Shreya:** run `python -m evals.gold_grading` with the API key and record the agreement counts. Get human approval of the expected ranges before citing them.
+
 ## Mission
 Build a real-time university Python assessment prototype that permits approved informational AI support but tests actual independent conceptual understanding. It must show a coding editor, execution, rubric-based grading by a separate AI, dynamic challenge variants, Plan Mode, a learner-state model, progressive difficulty, and a teacher dashboard with human review.
 
@@ -76,40 +94,68 @@ A separate tab labelled **Plan Mode** next to Code and Reference. Student submit
 ## Individual task cards
 
 ### Shreya / AI-ML
-- **S1 P0 (18:20-18:45):** define request/response schemas for `/api/assist` and rubric for `/api/attempt`; agree exact `Question` types with Aalia. Done: two valid JSON examples and blocked-answer test case.
-- **S2 P0 (18:45-20:00):** implement `tutor_service.py` with allowlist modes, progressive help policy, refusal of full solutions; split general reference retrieval from question-aware responses. Done: 8 allowed prompts succeed, 8 prohibited prompts denied/limited, no solution leakage in sampled outputs.
-- **S3 P0 (19:30-20:30):** `grader_service.py`: separate model call, structured scores 0-30, rationale, confidence/review flag; ambiguity and minor syntax tolerance. Done: 6 gold rubric cases align with human grades within declared tolerance.
-- **S4 P0 (20:30-21:15):** implement learner-state + transfer selection in `adapt.py` (or pair with Ahmed). Done: assisted success leads to transfer, two independent successes leads to increase, failures do not increase, no infinite loop.
-- **S5 P1 (21:15-22:15):** question variation using approved templates, parametrised task statements and reference tests; check duplicates, contradictions, impossible constraints; fallback to vetted bank.
-- **S6 P1:** adversarial evals including prompt injection inside code/comments, multi-turn hint leakage, 'answer but call it conceptual', hidden-test prompt request, reviewer impersonation. Publish outcomes without overstating generalisation.
+- ✅ **S1 P0 (18:20-18:45):** define request/response schemas for `/api/assist` and rubric for `/api/attempt`; agree exact `Question` types with Aalia. Done: two valid JSON examples and blocked-answer test case.
+  - *Status:* `cognit_ai/contracts.py` and `examples/contracts.json` are on main. The backend's `contracts/models.py` re-exports them.
+- ✅ **S2 P0 (18:45-20:00):** implement `tutor_service.py` with allowlist modes, progressive help policy, refusal of full solutions; split general reference retrieval from question-aware responses. Done: 8 allowed prompts succeed, 8 prohibited prompts denied/limited, no solution leakage in sampled outputs.
+  - *Status:* `tests/test_services.py` has `test_eight_allowed` and `test_eight_prohibited`.
+- 🟡 **S3 P0 (19:30-20:30):** `grader_service.py`: separate model call, structured scores 0-30, rationale, confidence/review flag; ambiguity and minor syntax tolerance. Done: 6 gold rubric cases align with human grades within declared tolerance.
+  - *Status:* the grader and 6 gold cases (`evals/gold_grading.py`) are written.
+  - *Remaining:* run it live with the API key, record the agreement count, and get human sign-off on the expected ranges.
+- ✅ **S4 P0 (20:30-21:15):** implement learner-state + transfer selection in `adapt.py` (or pair with Ahmed). Done: assisted success leads to transfer, two independent successes leads to increase, failures do not increase, no infinite loop.
+  - *Status:* covered by the tests for assisted transfer, two independent successes, failure never increasing, the difficulty cap, and no loop on exhaustion.
+- ✅ **S5 P1 (21:15-22:15):** question variation using approved templates, parametrised task statements and reference tests; check duplicates, contradictions, impossible constraints; fallback to vetted bank.
+  - *Status:* `cognit_ai/question_variants.py` has 3 vetted templates (`count_target`, `unique_count`, `first_repeat`), seeded variants, validation and duplicate fallback.
+- 🟡 **S6 P1:** adversarial evals including prompt injection inside code/comments, multi-turn hint leakage, 'answer but call it conceptual', hidden-test prompt request, reviewer impersonation. Publish outcomes without overstating generalisation.
+  - *Status:* `evals/adversarial_eval.py` covers direct-answer, hidden-test, "ignore instructions", impersonation and answer-as-plan prompts, all single-turn and in lookup mode.
+  - *Remaining:* injection inside code/comments, multi-turn hint leakage, and publishing the results with denominators.
 - **Deviation:** if live generation fails validation or 30-minute timebox, use vetted templates. If Fable latency/cost is high, use Sonnet for tutor and Fable for grading, or use Sonnet for both with candid model disclosure.
 
 ### Aalia / Backend
-- **A1 P0 (18:20-18:50):** scaffold FastAPI, CORS for frontend, Pydantic contracts, OpenAPI, `.env.example`. Done: `/health` and `/api/session/start` work from a shared branch.
-- **A2 P0 (18:50-19:45):** persistence and session-state CRUD; choose Supabase Postgres if configured within 25 minutes, else SQLite fallback. Tables: sessions, problems, attempts, assistance_events, evaluations, mastery_state, teacher_reviews. Done: full run persists and reloads without errors; no public credentials.
-- **A3 P0 (19:45-20:30):** orchestration endpoints `/api/attempt`, `/api/next`, `/api/assist`, `/api/teacher/session` integrating Shreya services. Done: integration smoke script shows end-to-end JSON.
-- **A4 P0 (20:30-21:15):** coordinate Pyodide Web Worker contract with DS, define code/test execution data, timeouts, errors. NEVER execute student code in backend host process. Done: normal, infinite-loop and exception cases produce bounded and readable results.
-- **A5 P0 (21:15-22:00):** teacher override endpoint with audit log and deployment. Done: public staging health works and a full session appears after reload.
-- **A6 P1:** reliability, short model timeout, retry budget, idempotent attempt submission and rate limiting; cost-guard provider usage.
+- ✅ **A1 P0 (18:20-18:50):** scaffold FastAPI, CORS for frontend, Pydantic contracts, OpenAPI, `.env.example`. Done: `/health` and `/api/session/start` work from a shared branch.
+  - *Status:* on `backend/a3-endpoints`, **not merged to main**.
+- ✅ **A2 P0 (18:50-19:45):** persistence and session-state CRUD; choose Supabase Postgres if configured within 25 minutes, else SQLite fallback. Tables: sessions, problems, attempts, assistance_events, evaluations, mastery_state, teacher_reviews. Done: full run persists and reloads without errors; no public credentials.
+  - *Status:* SQLite with all 7 tables, `GET /api/session/{id}` reload and `scripts/smoke_persistence.py`. Aligned with `cognit_ai`. **Not merged.**
+- ✅ **A3 P0 (19:45-20:30):** orchestration endpoints `/api/attempt`, `/api/next`, `/api/assist`, `/api/teacher/session` integrating Shreya services. Done: integration smoke script shows end-to-end JSON.
+  - *Status:* all endpoints are in place. `scripts/smoke_e2e.py` runs 35 checks, including leak checks. **Not merged.**
+- 🟡 **A4 P0 (20:30-21:15):** coordinate Pyodide Web Worker contract with DS, define code/test execution data, timeouts, errors. NEVER execute student code in backend host process. Done: normal, infinite-loop and exception cases produce bounded and readable results.
+  - *Status:* draft contract in `backend/RUNNER_CONTRACT.md`.
+  - *Remaining:* DS sign-off and answers to its 2 open questions. Proving the infinite-loop and exception cases needs DS's D2 worker.
+- 🟡 **A5 P0 (21:15-22:00):** teacher override endpoint with audit log and deployment. Done: public staging health works and a full session appears after reload.
+  - *Status:* `POST /api/teacher/review` with an append-only audit log is done.
+  - *Remaining:* deploy to public staging, or decide on a local-only demo.
+- ✅ **A6 P1:** reliability, short model timeout, retry budget, idempotent attempt submission and rate limiting; cost-guard provider usage.
+  - *Status:* `Idempotency-Key` on attempt, per-session rate limits and AI call caps (`app/limits.py`), a 12 s model timeout and 1 retry (`cognit_ai/provider.py`).
 - **Deviation:** if backend cloud hosting blocked >30 min, run locally and record demo. If Supabase blocked >25 min, SQLite local. Never add authentication late at cost of core flow.
 
 ### DS / Frontend & video
-- **D1 P0 (18:20-19:00):** bootstrap React/Vite TS frontend with `/student` and `/teacher`, Monaco editor, accessible Run/Submit UI, typing and mobile-safe layout. Done: an unconnected editor runs locally with mock question.
-- **D2 P0 (19:00-19:45):** browser Pyodide Web Worker for running Python and public tests. Handle loading, errors, infinite loops (terminate worker and recreate), disallowed imports and timeouts; do not market as secure production sandbox. Done: 3 example snippets tested.
-- **D3 P0 (19:45-20:30):** integrate session/start, attempt, next, code execution; add visible progress, points, upcoming question, explanations. Done: one complete question on backend.
-- **D4 P0 (20:30-21:00):** assistance UI with Lookup / Plan Mode / Hint and refusal messages; show allowed source citations. Done: recorded hint after attempt and denied solution request.
-- **D5 P0 (21:00-21:40):** teacher dashboard with scores, skill labels, assisted/independent comparison, attempt log, teacher override UI. Done: actual stored data reflected, not fake metrics.
-- **D6 P0 (21:40-22:20):** capture a <=2-min video of one real student run, show human review and new question. Use captions and truthful 'sped-up' labels; export, upload, verify playback. Send link to Ahmed.
-- **D7 P1:** Figma sketch/design polish if stable, keyboard shortcuts, good typography and loading skeletons.
+- ✅ **D1 P0 (18:20-19:00):** bootstrap React/Vite TS frontend with `/student` and `/teacher`, Monaco editor, accessible Run/Submit UI, typing and mobile-safe layout. Done: an unconnected editor runs locally with mock question.
+  - *Status:* on main, with a TS contract mirror in `frontend/src/types/contracts.ts`.
+- ⬜ **D2 P0 (19:00-19:45):** browser Pyodide Web Worker for running Python and public tests. Handle loading, errors, infinite loops (terminate worker and recreate), disallowed imports and timeouts; do not market as secure production sandbox. Done: 3 example snippets tested.
+  - *Status:* only `stubRunner.ts` exists. Build to `backend/RUNNER_CONTRACT.md`: ids `ex0`, …, calls `fn(*input)`, 2 s per test and 5 s per run, `BLOCKED_IMPORT`/`TIMEOUT` error strings. **Not blocked.**
+- ⬜ **D3 P0 (19:45-20:30):** integrate session/start, attempt, next, code execution; add visible progress, points, upcoming question, explanations. Done: one complete question on backend.
+  - *Status:* can start now against the `backend/a3-endpoints` branch run locally. Send an `Idempotency-Key` on Submit.
+- ⬜ **D4 P0 (20:30-21:00):** assistance UI with Lookup / Plan Mode / Hint and refusal messages; show allowed source citations. Done: recorded hint after attempt and denied solution request.
+  - *Status:* tabs exist as placeholders. Endpoint `/api/assist` exists on the backend branch.
+- ⬜ **D5 P0 (21:00-21:40):** teacher dashboard with scores, skill labels, assisted/independent comparison, attempt log, teacher override UI. Done: actual stored data reflected, not fake metrics.
+  - *Status:* static shell only. The endpoints exist on the backend branch.
+- ⬜ **D6 P0 (21:40-22:20):** capture a <=2-min video of one real student run, show human review and new question. Use captions and truthful 'sped-up' labels; export, upload, verify playback. Send link to Ahmed.
+  - *Status:* blocked on the end-to-end flow (D2–D5 and the backend merge).
+- ⬜ **D7 P1:** Figma sketch/design polish if stable, keyboard shortcuts, good typography and loading skeletons.
+  - *Status:* Ctrl/Cmd+Enter to run already works.
 - **Deviation:** if Monaco or Pyodide takes >30 min, use CodeMirror or plain multiline code editor with browser Python via already proven package. Never replace working demo with risky late redesign.
 
 ### Ahmed / Product, tests, integration, submission
-- **H1 P0 (18:20-18:45):** write 6 carefully checked Python problems over 3 skills: hashing, loops/edge cases, basic algorithmic complexity; each has public prompt, 3 normal tests, 3 edge cases, misconception target, conceptual rubric, paired transfer problem. Verify input/output specs.
-- **H2 P0 (18:45-19:15):** make golden evaluation examples: strong correct solution, partial understanding, syntax bug with sound concept, passing code with weak explanation, prompt-leak request, infinite-loop code. Provide expected points/flags and review cases.
-- **H3 P0 (19:15-20:00):** own `scoring.py` with documented point weights/difficulty weighting and simple deterministic tests. Coordinate with Shreya's grader schema. Done: boundary test scores exactly 0/100, mixed scores correct, no double-counting.
-- **H4 P0 (20:00-21:00):** end-to-end QA from student perspective, fixed blocker list with P0/P1, run 4 team attempts, note observed outcomes rather than inventing performance claims.
-- **H5 P0 (21:00-22:00):** prepare research-backed rationale, Devpost description, README instructions, model and data limitations, project architecture drawing in markdown, 6-minute Q&A answers.
-- **H6 P0 (before 11:15 tomorrow):** add team members, public repo, demo URL, video, track, descriptions, final commit and submit. Verify acknowledgement before deadline. DS owns recording, Ahmed owns submission.
+- ⬜ **H1 P0 (18:20-18:45):** write 6 carefully checked Python problems over 3 skills: hashing, loops/edge cases, basic algorithmic complexity; each has public prompt, 3 normal tests, 3 edge cases, misconception target, conceptual rubric, paired transfer problem. Verify input/output specs.
+  - *Status:* not in the repo. The backend uses 1 placeholder (`first_unique`) plus 3 of Shreya's template variants (`backend/app/data/questions.py`). Use positional-arg-list `input`.
+- ⬜ **H2 P0 (18:45-19:15):** make golden evaluation examples: strong correct solution, partial understanding, syntax bug with sound concept, passing code with weak explanation, prompt-leak request, infinite-loop code. Provide expected points/flags and review cases.
+  - *Status:* not in the repo. Shreya's `evals/gold_grading.py` already covers the explanation-only cases and could be extended.
+- ⬜ **H3 P0 (19:15-20:00):** own `scoring.py` with documented point weights/difficulty weighting and simple deterministic tests. Coordinate with Shreya's grader schema. Done: boundary test scores exactly 0/100, mixed scores correct, no double-counting.
+  - *Status:* not in the repo. Aalia's temporary stand-in is `backend/app/scoring.py`: swap in `score_attempt` and `effective_score`.
+- ⬜ **H4 P0 (20:00-21:00):** end-to-end QA from student perspective, fixed blocker list with P0/P1, run 4 team attempts, note observed outcomes rather than inventing performance claims.
+  - *Status:* needs D2–D5 and the backend merge.
+- ⬜ **H5 P0 (21:00-22:00):** prepare research-backed rationale, Devpost description, README instructions, model and data limitations, project architecture drawing in markdown, 6-minute Q&A answers.
+  - *Status:* the frontend and backend READMEs exist. The rest isn't in the repo.
+- ⬜ **H6 P0 (before 11:15 tomorrow):** add team members, public repo, demo URL, video, track, descriptions, final commit and submit. Verify acknowledgement before deadline. DS owns recording, Ahmed owns submission.
 - **Deviation:** if <1h to internal cutoff and core flow fails, drop nonessential AI generation and design polish, keep a recorded truthful fallback demo. Never fabricate successes.
 
 ## Timeboxed milestones
@@ -183,7 +229,7 @@ A separate tab labelled **Plan Mode** next to Code and Reference. Student submit
 - 1:50–2:00: stack and specific novelty, cite measured eval result if tested; no fictitious performance.
 
 ## Final gate checklist
-- [ ] Repo public with commits prior to cutoff; `.env` never committed
+- [ ] Repo public with commits prior to cutoff; `.env` never committed (as of 15 Nov, no `.env` committed on any branch)
 - [ ] All four participants on Devpost with ticket info as required
 - [ ] Reply track selected; truthful description
 - [ ] Video <=2:00, uploaded, publicly playable, real full run, sped-up parts labelled

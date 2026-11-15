@@ -43,6 +43,7 @@ json.dumps({'stdout':out.getvalue()[:2000],'results':results},ensure_ascii=False
 self.onmessage = async e => {
   try {
     const py = await python();
+    self.postMessage({type:'ready'});
     py.globals.set('cognit_payload', JSON.stringify(e.data));
     const raw = await py.runPythonAsync(script);
     self.postMessage({type:'result',...JSON.parse(raw)});

@@ -41,7 +41,7 @@ class AssistResponse(BaseModel):
     decision: Literal['allow', 'limit', 'deny']
     content: str
     citations: list[str] = Field(default_factory=list)
-    hint_level: int = Field(default=0, ge=0, le=3)
+    hint_level: int = Field(default=0, ge=0)
     reason_code: str
 
 class ClientTestResult(BaseModel):

@@ -10,7 +10,7 @@ import { Badge, Card, ErrorBanner } from '../components/ui'
 import { assistReasonLabel, DECISION_STYLE, flagLabel, INFO_FLAGS } from '../student/labels'
 import { loadSnapshot } from '../student/storage'
 import { AttemptDetails } from '../teacher/AttemptDetails'
-import type { TeacherSessionView } from '../types/contracts'
+import type { TeacherRosterEntry, TeacherSessionView } from '../types/contracts'
 
 const fmt = (n: number | null | undefined, suffix = '') => (n === null || n === undefined ? '—' : `${n}${suffix}`)
 
@@ -21,7 +21,8 @@ export function TeacherPage() {
   const [loadedFor, setLoadedFor] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [refreshing, setRefreshing] = useState(false)
-  const [accessCode, setAccessCode] = useState(() => sessionStorage.getItem('cognit-demo-code') ?? '')
+  const [roster, setRoster] = useState<TeacherRosterEntry[]>([])
+  const [rosterError, setRosterError] = useState<string | null>(null)
 
   const fetchView = useCallback(async (id: string) => {
     try {
@@ -35,6 +36,10 @@ export function TeacherPage() {
     } finally {
       setRefreshing(false)
     }
+  }, [])
+
+  useEffect(() => {
+    api.getTeacherRoster().then(data => setRoster(data.sessions)).catch(err => setRosterError(errorMessage(err)))
   }, [])
 
   useEffect(() => {
@@ -52,12 +57,12 @@ export function TeacherPage() {
   const loading = sessionId !== null && loadedFor !== sessionId
 
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6">
+    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-8">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-baseline gap-3">
           <h1 className="text-xl font-semibold text-slate-900">Teacher review</h1>
           <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-800 ring-1 ring-amber-200">
-            Demo only · no authentication · no real student data
+            Public demo roster · fictional student names only
           </span>
         </div>
         {sessionId && (
@@ -73,13 +78,21 @@ export function TeacherPage() {
         )}
       </header>
 
-      <form onSubmit={e => { e.preventDefault(); sessionStorage.setItem('cognit-demo-code', accessCode.trim()); refresh() }}
-        className="flex flex-wrap items-center gap-2 rounded-xl border border-indigo-100 bg-indigo-50/40 p-3">
-        <label htmlFor="teacher-demo-code" className="text-xs font-semibold text-slate-700">Team access code</label>
-        <input id="teacher-demo-code" type="password" className="min-w-32 flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
-          value={accessCode} onChange={e => setAccessCode(e.target.value)} placeholder="Team demo code" />
-        <button type="submit" className={btn.small}>Apply code</button>
-      </form>
+      <section aria-label="Student roster" className="rounded-2xl border border-[#303440] bg-[#1B1E27] p-5">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <div><h2 className="font-semibold text-[#F4F4F6]">Student sessions</h2><p className="mt-1 text-xs text-[#A1A5B0]">Select a student label to inspect progress and reasoning.</p></div>
+          <span className="rounded-full border border-[#303440] px-3 py-1 text-xs text-[#A1A5B0]">{roster.length} sessions</span>
+        </div>
+        {rosterError && <p className="text-xs text-amber-300">{rosterError}</p>}
+        <div className="grid max-h-64 gap-2 overflow-y-auto sm:grid-cols-2 lg:grid-cols-3">
+          {roster.map(entry => <button key={entry.session_id} type="button" onClick={() => setParams({session:entry.session_id})}
+            className={`rounded-xl border px-4 py-3 text-left transition-colors hover:border-[#8B7CF6] ${entry.session_id===sessionId?'border-[#8B7CF6] bg-[#29263E]':'border-[#303440] bg-[#151820]'}`}>
+            <div className="flex items-center justify-between gap-2"><span className="truncate text-sm font-semibold text-[#F4F4F6]">{entry.student_alias}</span><span className="text-xs text-[#59C7B5]">L{entry.difficulty}</span></div>
+            <div className="mt-2 text-xs text-[#A1A5B0]">{entry.attempt_count} attempts · {entry.stage} · {entry.questions_served} questions</div>
+          </button>)}
+          {!rosterError && roster.length===0 && <p className="text-sm text-[#A1A5B0]">No students have started an assessment yet.</p>}
+        </div>
+      </section>
       {!sessionId && <SessionPicker onPick={(id) => setParams({ session: id })} />}
       {loading && <p className="text-sm text-slate-500">Loading session…</p>}
       {!loading && error && <ErrorBanner message={error} />}

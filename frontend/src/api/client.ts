@@ -15,6 +15,7 @@ import type {
   TeacherReviewRequest,
   TeacherReviewResponse,
   TeacherSessionView,
+  ConceptProbe,
 } from '../types/contracts'
 
 /**
@@ -41,7 +42,7 @@ async function request<T>(method: 'GET' | 'POST', path: string, body?: unknown, 
   try {
     res = await fetch(`${API_BASE_URL}${path}`, {
       method,
-      headers: { ...(body !== undefined && { 'Content-Type': 'application/json' }), ...headers },
+      headers: { ...(body !== undefined && { 'Content-Type': 'application/json' }), ...(sessionStorage.getItem('cognit-demo-code') && { 'X-Cognit-Demo-Key': sessionStorage.getItem('cognit-demo-code')! }), ...headers },
       body: body === undefined ? undefined : JSON.stringify(body),
     })
   } catch {
@@ -72,6 +73,10 @@ export const api = {
   submitAttempt: (req: AttemptRequest, idempotencyKey: string) =>
     request<AttemptResponse>('POST', '/api/attempt', req, { 'Idempotency-Key': idempotencyKey }),
   assist: (req: AssistRequest) => request<AssistResponse>('POST', '/api/assist', req),
+  startConceptProbe: (req: { session_id: string; attempt_id: string }) =>
+    request<ConceptProbe>('POST', '/api/probe/start', req),
+  answerConceptProbe: (req: { session_id: string; attempt_id: string; answer: string }) =>
+    request<ConceptProbe>('POST', '/api/probe/answer', req),
   next: (req: NextRequest) => request<NextResponse>('POST', '/api/next', req),
   getTeacherSession: (sessionId: string) => request<TeacherSessionView>('GET', `/api/teacher/session/${enc(sessionId)}`),
   submitReview: (req: TeacherReviewRequest) => request<TeacherReviewResponse>('POST', '/api/teacher/review', req),

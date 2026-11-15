@@ -1,4 +1,6 @@
 import sys
+import os
+import hmac
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -16,7 +18,7 @@ from contextlib import asynccontextmanager  # noqa: E402
 from .config import settings  # noqa: E402
 from .data.questions import QUESTIONS  # noqa: E402
 from .db import repo  # noqa: E402
-from .routes import assist, attempt, health, next, session, teacher  # noqa: E402
+from .routes import assist, attempt, health, next, session, teacher, probe  # noqa: E402
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
@@ -35,6 +37,18 @@ app.add_middleware(
 def _error(status: int, code: str, message: str) -> JSONResponse:
     return JSONResponse(status_code=status, content={"ok": False, "error": {"code": code, "message": message}})
 
+@app.middleware("http")
+async def demo_access_guard(request: Request, call_next):
+    # Deployment-level shared code for synthetic hackathon demos only.
+    # This is not a student identity/authentication system.
+    required = os.getenv("COGNIT_DEMO_ACCESS_CODE", "")
+    if required and request.url.path.startswith("/api/"):
+        supplied = request.headers.get("x-cognit-demo-key", "")
+        if not hmac.compare_digest(required, supplied):
+            return _error(401, "DEMO_ACCESS_REQUIRED", "Enter the team's demo access code to use Cognit.")
+    return await call_next(request)
+
+
 @app.exception_handler(StarletteHTTPException)
 async def http_error(_: Request, exc: StarletteHTTPException) -> JSONResponse:
     if isinstance(exc.detail, dict) and "code" in exc.detail:
@@ -52,7 +66,7 @@ async def validation_error(_: Request, exc: RequestValidationError) -> JSONRespo
 async def unhandled_error(_: Request, exc: Exception) -> JSONResponse:
     return _error(500, "INTERNAL_ERROR", "Unexpected server error")
 
-for router in (health, session, attempt, assist, next, teacher):
+for router in (health, session, attempt, assist, next, teacher, probe):
     app.include_router(router.router)
 
 # The production Docker image includes the Vite build here. Local development

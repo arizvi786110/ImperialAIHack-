@@ -12,6 +12,8 @@ import copy
 from typing import Optional
 
 from sqlalchemy.orm import Session
+from sqlalchemy import select
+from .db.models import ConceptProbeRow
 
 from cognit_ai.adapt import Evidence, LearnerState
 from contracts.models import PrivateQuestion
@@ -51,7 +53,16 @@ def commit_current(db: Session, session: SessionRow) -> Optional[str]:
     latest = attempts[-1]
     ev = repo.latest_evaluation(db, latest.id)
     question = repo.get_problem(db, qid)
-    reason = ls.record(_evidence(session, question, ev.provisional_score if ev else 0.0, latest.assisted))
+    progress_score = ev.provisional_score if ev else 0.0
+    probe = db.scalars(select(ConceptProbeRow).where(ConceptProbeRow.attempt_id == latest.id)).first()
+    # Confirming the right output without explaining a counterexample is not
+    # enough evidence for promotion. A confident, low-scored interview can
+    # block promotion, but cannot alter the recorded 100-point assessment score.
+    if (probe is not None and probe.score is not None and probe.score < 8
+            and probe.confidence is not None and probe.confidence >= 0.75
+            and not probe.needs_review):
+        progress_score = min(progress_score, 69.0)
+    reason = ls.record(_evidence(session, question, progress_score, latest.assisted))
     repo.save_learner_state(db, session, ls)
     session.last_reason = reason
     return reason

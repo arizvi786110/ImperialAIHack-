@@ -29,17 +29,20 @@ export function CodeEditor({ value, onChange, onRun, onSubmit }: CodeEditorProps
   }
 
   return (
-    <div className="h-full min-h-[280px] overflow-hidden rounded-md border border-slate-300">
+    <div className="h-full min-h-[280px] overflow-hidden rounded-xl border border-slate-200 bg-white">
       <Editor
         height="100%"
         defaultLanguage="python"
         value={value}
         onChange={(v) => onChange(v ?? '')}
         onMount={handleMount}
-        theme="vs-dark"
+        theme="vs"
         loading={<div className="p-4 text-sm text-slate-500">Loading editor…</div>}
         options={{
           fontSize: 14,
+          lineHeight: 23,
+          renderLineHighlight: 'line',
+          padding: { top: 16, bottom: 12 },
           minimap: { enabled: false },
           scrollBeyondLastLine: false,
           tabSize: 4,

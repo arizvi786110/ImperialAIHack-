@@ -11,6 +11,7 @@ interface AttemptResultProps {
   onNext: () => void
   onOpenPlan: () => void
   nextBusy: boolean
+  canAdvance: boolean
   planAvailable: boolean
 }
 
@@ -31,7 +32,7 @@ function Meter({ label, value, max }: { label: string; value: number; max: numbe
   )
 }
 
-export function AttemptResult({ attempt, attemptCount, onNext, onOpenPlan, nextBusy, planAvailable }: AttemptResultProps) {
+export function AttemptResult({ attempt, attemptCount, onNext, onOpenPlan, nextBusy, canAdvance, planAvailable }: AttemptResultProps) {
   const info = attempt.flags.filter((f) => INFO_FLAGS.has(f))
   const warnings = attempt.flags.filter((f) => !INFO_FLAGS.has(f))
   const suggestPlan = attempt.next_action === 'plan' && planAvailable
@@ -81,10 +82,10 @@ export function AttemptResult({ attempt, attemptCount, onNext, onOpenPlan, nextB
           <button
             type="button"
             onClick={onNext}
-            disabled={nextBusy}
+            disabled={nextBusy || !canAdvance}
             className={suggestPlan ? btn.secondary : btn.primary}
           >
-            {nextBusy ? 'Loading…' : 'Next question'}
+            {nextBusy ? 'Loading…' : !canAdvance ? 'Answer reasoning check to continue' : 'Next question →'}
           </button>
         )}
       </div>

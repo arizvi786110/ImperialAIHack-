@@ -224,6 +224,12 @@ export interface TeacherAttemptRow {
   effective_concept_score: number
   effective_score: number
   reviews: ReviewRecord[]
+  concept_probe?: {
+    question: string; source: string; answer: string | null;
+    score: number | null; confidence: number | null;
+    rationale: string | null; needs_review: boolean;
+    model_used: string | null;
+  } | null
 }
 
 export interface ScoreBreakdown {
@@ -282,4 +288,20 @@ export interface TeacherReviewRequest {
 export interface TeacherReviewResponse {
   review_status: ReviewStatus
   effective_score: number
+}
+
+
+// Extra evidence of reasoning. Separate from the original 100-point score.
+export interface ConceptProbe {
+  probe_id: string
+  attempt_id: string
+  question: string
+  source: string
+  answered: boolean
+  answer: string | null
+  score: number | null
+  confidence: number | null
+  rationale: string | null
+  needs_review: boolean
+  model_used: string | null
 }

@@ -1,4 +1,6 @@
 import sys
+import os
+import hmac
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -34,6 +36,18 @@ app.add_middleware(
 
 def _error(status: int, code: str, message: str) -> JSONResponse:
     return JSONResponse(status_code=status, content={"ok": False, "error": {"code": code, "message": message}})
+
+@app.middleware("http")
+async def demo_access_guard(request: Request, call_next):
+    # Deployment-level shared code for synthetic hackathon demos only.
+    # This is not a student identity/authentication system.
+    required = os.getenv("COGNIT_DEMO_ACCESS_CODE", "")
+    if required and request.url.path.startswith("/api/"):
+        supplied = request.headers.get("x-cognit-demo-key", "")
+        if not hmac.compare_digest(required, supplied):
+            return _error(401, "DEMO_ACCESS_REQUIRED", "Enter the team's demo access code to use Cognit.")
+    return await call_next(request)
+
 
 @app.exception_handler(StarletteHTTPException)
 async def http_error(_: Request, exc: StarletteHTTPException) -> JSONResponse:

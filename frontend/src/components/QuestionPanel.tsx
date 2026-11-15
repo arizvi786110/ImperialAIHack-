@@ -29,14 +29,14 @@ export function QuestionPanel({ question }: { question: PublicQuestion }) {
         <span className="ml-auto text-xs text-slate-500">{question.max_points} pts</span>
       </div>
 
-      <h1 id="question-title" className="text-xl font-semibold text-slate-900">
+      <h1 id="question-title" className="text-2xl font-bold tracking-tight text-slate-900">
         {question.title}
       </h1>
-      <p className="leading-relaxed text-slate-700">{question.statement}</p>
+      <p className="text-[15px] leading-7 text-slate-700">{question.statement}</p>
 
       <div>
-        <h2 className="mb-1 text-sm font-semibold text-slate-900">Function signature</h2>
-        <pre className="overflow-x-auto rounded-md bg-slate-900 px-3 py-2 font-mono text-sm text-slate-100">
+        <h2 className="mb-2 text-sm font-bold text-slate-900">Function signature</h2>
+        <pre className="overflow-x-auto rounded-xl border border-indigo-100 bg-indigo-50/70 px-4 py-3 font-mono text-sm font-semibold text-indigo-800">
           <code>{question.function_signature}</code>
         </pre>
       </div>
@@ -54,8 +54,8 @@ export function QuestionPanel({ question }: { question: PublicQuestion }) {
             <tbody className="text-slate-800">
               {question.example_tests.map((t, i) => (
                 <tr key={i} className="border-t border-slate-100">
-                  <td className="py-1.5 pr-4">{callLabel(fn, t.input)}</td>
-                  <td className="py-1.5">{pyRepr(t.expected)}</td>
+                  <td className="border-t border-slate-100 py-3 pr-4">{callLabel(fn, t.input)}</td>
+                  <td className="border-t border-slate-100 py-3">{pyRepr(t.expected)}</td>
                 </tr>
               ))}
             </tbody>

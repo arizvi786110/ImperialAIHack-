@@ -21,6 +21,7 @@ export function TeacherPage() {
   const [loadedFor, setLoadedFor] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [refreshing, setRefreshing] = useState(false)
+  const [accessCode, setAccessCode] = useState(() => sessionStorage.getItem('cognit-demo-code') ?? '')
 
   const fetchView = useCallback(async (id: string) => {
     try {
@@ -72,6 +73,13 @@ export function TeacherPage() {
         )}
       </header>
 
+      <form onSubmit={e => { e.preventDefault(); sessionStorage.setItem('cognit-demo-code', accessCode.trim()); refresh() }}
+        className="flex flex-wrap items-center gap-2 rounded-xl border border-indigo-100 bg-indigo-50/40 p-3">
+        <label htmlFor="teacher-demo-code" className="text-xs font-semibold text-slate-700">Team access code</label>
+        <input id="teacher-demo-code" type="password" className="min-w-32 flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+          value={accessCode} onChange={e => setAccessCode(e.target.value)} placeholder="Team demo code" />
+        <button type="submit" className={btn.small}>Apply code</button>
+      </form>
       {!sessionId && <SessionPicker onPick={(id) => setParams({ session: id })} />}
       {loading && <p className="text-sm text-slate-500">Loading session…</p>}
       {!loading && error && <ErrorBanner message={error} />}

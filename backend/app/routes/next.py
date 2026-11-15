@@ -8,6 +8,9 @@ settings.max_questions_per_session (no loops); double-click safe.
 
 import hashlib
 from typing import Optional
+from sqlalchemy import select
+from ..db.models import ConceptProbeRow
+from cognit_ai.question_router import propose
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
@@ -74,6 +77,34 @@ def _fresh_variant(db: Session, session: SessionRow, ls: LearnerState,
     return None
 
 
+def _agent_variant(db: Session, session: SessionRow, ls: LearnerState) -> Optional[PrivateQuestion]:
+    """Let Claude choose an approved task family only when explicitly enabled."""
+    if not ls.last_skill:
+        return None
+    attempts = repo.list_attempts(db, session.id)
+    if not attempts:
+        return None
+    recent = attempts[-1]
+    previous = repo.get_problem(db, recent.question_id)
+    probe = db.scalars(select(ConceptProbeRow).where(ConceptProbeRow.attempt_id == recent.id)).first()
+    skill = ls.last_skill
+    progress = ls.skill_progress.get(skill)
+    difficulty = progress.difficulty if progress else ls.difficulty
+    template, _ = propose(
+        skill=skill, difficulty=difficulty,
+        previous_question=previous.statement if previous else "",
+        previous_explanation=recent.explanation,
+        probe_answer=probe.answer if probe else None,
+        probe_score=probe.score if probe else None,
+    )
+    if template is None:
+        return None
+    try:
+        return safe_variant(template, _seed(session, "agent:" + template), _used_ids(db, ls))
+    except ValueError:
+        return None
+
+
 def _current(db: Session, session: SessionRow, reason: str) -> NextResponse:
     q = repo.get_problem(db, session.current_question_id)
     return NextResponse(question=q.public(), reason=reason, state=repo.session_state(session))
@@ -94,7 +125,12 @@ def next_question(req: NextRequest, db: Session = Depends(get_db)) -> Envelope[N
 
     nq: Optional[PrivateQuestion] = None
     if session.questions_served < settings.max_questions_per_session:
-        nq = select_next(ls, repo.list_problems(db), reason)
+        # A model may choose among validated templates, never invent an unchecked
+        # Python program. Keep the original selector as the deterministic fallback.
+        if not pending:
+            nq = _agent_variant(db, session, ls)
+        if nq is None:
+            nq = select_next(ls, repo.list_problems(db), reason)
         if nq is None and pending:
             nq = _transfer_variant(db, session, ls, pending)
         if nq is None and not pending:

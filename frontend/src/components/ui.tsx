@@ -14,7 +14,7 @@ export function ErrorBanner({ message, onDismiss }: { message: string; onDismiss
 }
 
 export function Card({ children, className = '' }: { children: ReactNode; className?: string }) {
-  return <section className={`rounded-lg border border-slate-200 bg-white p-5 shadow-sm ${className}`}>{children}</section>
+  return <section className={`rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_10px_35px_-20px_rgba(30,41,59,0.28)] ${className}`}>{children}</section>
 }
 
 export function Badge({ children, className }: { children: ReactNode; className: string }) {

@@ -12,7 +12,7 @@ interface HintBoxProps {
 
 const DEFAULT_QUERY = "I'm stuck. Can I have a hint?"
 
-/** Progressive conceptual hints (ladder of 3), only after a first attempt. */
+/** Ongoing Socratic guidance after the first attempt; no fixed hint ladder. */
 export function HintBox({ available, hints, onAsk, busy }: HintBoxProps) {
   const queryId = useId()
   const [query, setQuery] = useState('')
@@ -31,7 +31,7 @@ export function HintBox({ available, hints, onAsk, busy }: HintBoxProps) {
           Hints
         </h2>
         <span className="text-xs text-slate-500">
-          {available ? `${used} used · using hints marks this question as assisted` : 'Unlock after your first attempt'}
+          {available ? `${used} requested · follow-ups welcome (session limits apply)` : 'Unlock after your first attempt'}
         </span>
       </div>
       {available && (

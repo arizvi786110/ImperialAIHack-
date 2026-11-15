@@ -17,7 +17,7 @@ export function StudentPage(){
  const explanationId=useId()
  const [session,setSession]=useState<string|null>(null)
  const [question,setQuestion]=useState<PublicQuestion|null>(null)
- const [state,setState]=useState<SessionStartResponse['state']|null>(null)
+ const [,setState]=useState<SessionStartResponse['state']|null>(null)
  const [alias,setAlias]=useState('Demo Student')
  const [code,setCode]=useState('')
  const [explanation,setExplanation]=useState('')

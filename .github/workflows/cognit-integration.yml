@@ -33,6 +33,25 @@ jobs:
       - run: python -m pip install -r backend/requirements.txt -r requirements.txt
       - run: python -m pytest -q tests/test_hosted_spa.py
       - run: docker build -t cognit-team-demo .
+      - name: Boot and probe complete Docker app
+        run: |
+          docker run --rm -d --name cognit-probe -p 18000:8000 \
+            -e DATABASE_URL=sqlite:////data/cognit.db \
+            -e COGNIT_AI_ENABLED=false cognit-team-demo
+          for i in $(seq 1 25); do
+            if curl --fail --silent http://127.0.0.1:18000/health; then break; fi
+            sleep 1
+          done
+          curl --fail --silent http://127.0.0.1:18000/student | grep -qi 'html'
+          curl --fail --silent http://127.0.0.1:18000/teacher | grep -qi 'html'
+          curl --fail --silent -X POST http://127.0.0.1:18000/api/session/start \
+            -H 'Content-Type: application/json' \
+            -d '{"student_alias":"CI Team"}' | grep -q '"ok":true'
+      - name: Show Docker logs and stop container
+        if: always()
+        run: |
+          docker logs --tail 80 cognit-probe 2>/dev/null || true
+          docker stop cognit-probe 2>/dev/null || true
   frontend:
     runs-on: ubuntu-latest
     timeout-minutes: 15

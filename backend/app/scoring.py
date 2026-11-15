@@ -42,10 +42,24 @@ class AttemptScore:
 
 
 def summarise_tests(question: PrivateQuestion, results: list[ClientTestResult]) -> TestSummary:
-    total = len(question.example_tests)
-    # De-duplicate by id so repeating a passing result can't inflate the score.
-    passed_ids = {r.id for r in results if r.passed}
-    return TestSummary(passed=min(len(passed_ids), total), total=total)
+    """Check each public case exactly once, including actual value and type.
+
+    This detects inaccurate or duplicate client reports but DOES NOT attest that
+    the submitted code produced the reported actual values.
+    """
+    reported: dict[str, list[ClientTestResult]] = {}
+    for r in results:
+        reported.setdefault(r.id, []).append(r)
+    passed = 0
+    for index, case in enumerate(question.example_tests, start=1):
+        matches = reported.get(f"example-{index}", [])
+        if len(matches) != 1:
+            continue
+        r = matches[0]
+        if (r.passed and not r.error and
+                type(r.actual) is type(case.expected) and r.actual == case.expected):
+            passed += 1
+    return TestSummary(passed=passed, total=len(question.example_tests))
 
 
 def score_attempt(question: PrivateQuestion, results: list[ClientTestResult], concept_score: float) -> AttemptScore:

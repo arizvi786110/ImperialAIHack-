@@ -5,10 +5,10 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Header
 from sqlalchemy.orm import Session
 
-from cognit_ai import Evidence, GraderService
+from cognit_ai import GraderService
 from contracts.models import AttemptRequest, AttemptResponse, Envelope
 
-from .. import scoring
+from .. import progress, scoring
 from ..config import settings
 from ..db import repo
 from ..db.database import get_db
@@ -80,16 +80,8 @@ def submit_attempt(
                         provisional_score=score.total, extra_flags=flags)
 
     # Learner state (Shreyaa's adapt.py decides transfer/harder/same/remedial).
-    ls = repo.load_learner_state(session)
-    reason = ls.record(Evidence(
-        question_id=question.id,
-        skill=question.skill_tags[0] if question.skill_tags else "general",
-        difficulty=question.difficulty,
-        score=score.total,
-        assisted=assisted,
-        transfer=session.stage == "transfer",
-    ))
-    repo.save_learner_state(db, session, ls)
+    # Preview only: the real state is updated once per question, in /api/next.
+    reason, snapshot = progress.preview(session, question, score.total, assisted)
     session.last_reason = reason
     session.allowed_help = ["lookup", "plan", "hint"]  # unlocked after the first attempt
 
@@ -100,7 +92,7 @@ def submit_attempt(
         concept_score=score.concept_score,
         flags=flags,
         feedback=_feedback(score, grade.rationale),
-        mastery_snapshot=ls.snapshot(),
+        mastery_snapshot=snapshot,
         next_action=_next_action(reason, repo.count_attempts(db, session.id, question.id)),
     )
     attempt.response = response.model_dump(mode="json")

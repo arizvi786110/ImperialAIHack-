@@ -5,6 +5,8 @@ POST /api/teacher/review        override/approve concept score; append-only audi
 """
 
 from typing import Any, Optional
+from sqlalchemy import select
+from ..db.models import ConceptProbeRow
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
@@ -101,6 +103,17 @@ def teacher_session(session_id: str, db: Session = Depends(get_db)) -> Envelope[
         if ev is not None and ev.review_required and latest_review is None:
             review_flags.append({"attempt_id": a.id, "question_id": a.question_id, "flags": ev.flags,
                                  "confidence": ev.confidence, "rationale": ev.rationale})
+
+    # Independent concept probes are a second measure of reasoning, not
+    # additional points in the original 100-point rubric.
+    for row in attempt_rows:
+        probe = db.scalars(select(ConceptProbeRow).where(ConceptProbeRow.attempt_id == row["attempt_id"])).first()
+        row["concept_probe"] = None if probe is None else {
+            "question": probe.question, "source": probe.source,
+            "answer": probe.answer, "score": probe.score, "confidence": probe.confidence,
+            "rationale": probe.rationale, "needs_review": probe.needs_review,
+            "model_used": probe.model_used,
+        }
 
     # Difficulty-weighted overall score over the latest attempt per question.
     per_q = [

@@ -1,45 +1,73 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 @import "tailwindcss";
 
-:root { font-family: Inter, 'DM Sans', system-ui, sans-serif; background:#101218; color:#F4F4F6; font-synthesis:none; text-rendering:optimizeLegibility; -webkit-font-smoothing:antialiased }
-body { margin:0; min-width:320px; min-height:100vh; background:#101218 }
-button { cursor:pointer }
-button:disabled { cursor:not-allowed }
-::selection { background:#8B7CF6; color:#101218 }
-:focus-visible { outline:2px solid #8B7CF6; outline-offset:3px }
-html { scroll-behavior:smooth }
-.cognit-shell { background:#101218; color:#F4F4F6; min-height:100vh }
-.c-header { border-bottom:1px solid #303440; background:#151820 }
-.c-logo { background:#8B7CF6; color:#101218 }
-.c-nav-link { font-size:13px; color:#A1A5B0; font-weight:550; padding:10px 13px; border-radius:9px; transition:background .2s,color .2s }
-.c-nav-link:hover { background:#252836; color:#F4F4F6 }
-.c-nav-active { background:#26233B; color:#AFA3FF }
-.c-footer { border-top:1px solid #303440 }
-.c-eyebrow { color:#8B7CF6; text-transform:uppercase; letter-spacing:.18em; font-size:11px; font-weight:700 }
-.c-hero-heading { line-height:1.06 }
-.c-cta { transition:transform .2s,background .2s }
-.c-cta:hover { transform:translateY(-2px) }
-.cognit-shell :is(.bg-white,.bg-slate-50,.bg-slate-100,.bg-\[\#fbfcff\]) { background-color:#1B1E27!important }
-.cognit-shell :is(.bg-indigo-50,.bg-violet-50,.bg-sky-50,.bg-blue-50) { background-color:#24243A!important }
-.cognit-shell :is(.bg-emerald-50,.bg-green-50) { background-color:#1D3130!important }
-.cognit-shell :is(.bg-amber-50,.bg-yellow-50) { background-color:#332B24!important }
-.cognit-shell :is(.bg-rose-50,.bg-red-50) { background-color:#3A252D!important }
-.cognit-shell :is(.bg-indigo-600,.bg-indigo-700,.bg-violet-600) { background-color:#8B7CF6!important; color:#101218!important }
-.cognit-shell :is(.hover\:bg-indigo-500:hover,.hover\:bg-indigo-700:hover) { background-color:#A99FFF!important }
-.cognit-shell :is(.text-slate-900,.text-slate-800,.text-slate-700) { color:#F4F4F6!important }
-.cognit-shell :is(.text-slate-600,.text-slate-500,.text-slate-400) { color:#A1A5B0!important }
-.cognit-shell :is(.text-indigo-700,.text-indigo-600,.text-violet-700) { color:#AFA3FF!important }
-.cognit-shell :is(.border-slate-300,.border-slate-200,.border-slate-100,.border-indigo-100,.border-indigo-200) { border-color:#303440!important }
-.cognit-shell input, .cognit-shell textarea { background:#151820; color:#F4F4F6; border-color:#303440; }
-.cognit-shell input::placeholder, .cognit-shell textarea::placeholder { color:#727988 }
-.cognit-shell .c-code-surface, .cognit-shell .monaco-editor, .cognit-shell .monaco-editor .margin, .cognit-shell .monaco-editor-background, .cognit-shell .monaco-editor .view-overlays { background:#FFFFFF!important }
-.cognit-shell .monaco-editor input { background:transparent!important; }
-.cognit-shell .c-code-surface { color:#17213D!important }
-.cognit-shell pre { font-family:'JetBrains Mono',ui-monospace,monospace }
-.cognit-shell :is(code,kbd) { font-family:'JetBrains Mono',ui-monospace,monospace }
-.cognit-shell .text-white { color:#F4F4F6 }
-.cognit-shell .c-logo.text-white { color:#101218 }
-.cognit-shell a { text-decoration:none }
-.cognit-shell .c-feature { box-shadow:none }
-.cognit-shell .shadow-sm,.cognit-shell .shadow-lg { box-shadow:none!important }
-@media(prefers-reduced-motion:reduce) { html{scroll-behavior:auto} .c-cta,.c-feature { transition:none!important; transform:none!important } }
+/* Cognit Classic: accessible colour tokens, not global inversion of arbitrary
+   Tailwind styles. Every informational surface has an explicit contrasting ink. */
+:root {
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  color-scheme: dark;
+  --c-bg: #101218;
+  --c-panel: #1B1E27;
+  --c-panel-2: #252936;
+  --c-border: #384051;
+  --c-ink: #F4F4F6;
+  --c-muted: #B8BECA;
+  --c-accent: #A99FFF;
+  --c-mint: #80E2D0;
+  background: var(--c-bg);
+  color: var(--c-ink);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+body { margin:0; min-width:320px; min-height:100vh; background:var(--c-bg); }
+button { cursor:pointer; }
+button:disabled { cursor:not-allowed; }
+:focus-visible { outline:2px solid var(--c-accent); outline-offset:3px; }
+::selection { background:var(--c-accent); color:#101218; }
+html { scroll-behavior:smooth; }
+.cognit-shell { min-height:100vh; color:var(--c-ink); background:var(--c-bg); }
+.c-header { border-bottom:1px solid var(--c-border); background:#171A22; }
+.c-logo { background:#8B7CF6; color:#101218; }
+.c-nav-link { font-size:13px; color:var(--c-muted); font-weight:600; padding:10px 13px; border-radius:9px; transition:background .2s,color .2s; }
+.c-nav-link:hover { background:var(--c-panel-2); color:var(--c-ink); }
+.c-nav-active { background:#302C46; color:#DDD6FF; }
+.c-footer { border-top:1px solid var(--c-border); }
+.c-eyebrow { color:#BDB2FF; text-transform:uppercase; letter-spacing:.16em; font-size:11px; font-weight:700; }
+.c-hero-heading { line-height:1.06; }
+.c-cta { transition:transform .2s,background .2s; }
+.c-cta:hover { transform:translateY(-2px); }
+.cognit-shell :is(.bg-white,.bg-slate-50,.bg-slate-100) { background-color:var(--c-panel) !important; }
+.cognit-shell :is(.bg-indigo-50,.bg-violet-50,.bg-sky-50,.bg-blue-50) { background-color:#29283D !important; }
+.cognit-shell :is(.bg-emerald-50,.bg-green-50) { background-color:#1B3330 !important; }
+.cognit-shell :is(.bg-amber-50,.bg-yellow-50) { background-color:#3B3226 !important; }
+.cognit-shell :is(.bg-rose-50,.bg-red-50) { background-color:#3C2932 !important; }
+.cognit-shell :is(.text-slate-900,.text-slate-800,.text-slate-700) { color:var(--c-ink) !important; }
+.cognit-shell :is(.text-slate-600,.text-slate-500,.text-slate-400) { color:var(--c-muted) !important; }
+.cognit-shell :is(.text-indigo-700,.text-indigo-600,.text-violet-700,.text-indigo-800) { color:#C5BCFF !important; }
+.cognit-shell :is(.text-emerald-700,.text-emerald-800,.text-green-700) { color:var(--c-mint) !important; }
+.cognit-shell :is(.text-amber-700,.text-amber-800,.text-rose-700,.text-rose-800) { color:#FFD5A2 !important; }
+.cognit-shell :is(.border-slate-300,.border-slate-200,.border-slate-100,.border-indigo-100,.border-indigo-200) { border-color:var(--c-border) !important; }
+.cognit-shell :is(input,textarea,select) { background-color:#171A22; color:var(--c-ink); border-color:var(--c-border); }
+.cognit-shell :is(input,textarea)::placeholder { color:#A4ACBB; opacity:1; }
+.cognit-shell button.bg-indigo-600,
+.cognit-shell button.bg-indigo-700,
+.cognit-shell button.bg-violet-600,
+.cognit-shell .c-cta { background-color:#A99FFF !important; color:#101218 !important; }
+.cognit-shell button.bg-indigo-600 :is(span,strong,svg),
+.cognit-shell button.bg-violet-600 :is(span,strong,svg),
+.cognit-shell .c-cta :is(span,strong,svg) { color:#101218 !important; }
+.cognit-shell button.bg-indigo-600:hover,
+.cognit-shell button.bg-violet-600:hover,
+.cognit-shell .c-cta:hover { background-color:#CCC5FF !important; }
+.cognit-shell :is(button,a):disabled { opacity:.5; }
+.cognit-shell .text-white { color:#F4F4F6; }
+/* Monaco's light theme is intentionally isolated from the dark dashboard. */
+.cognit-shell :is(.monaco-editor,.monaco-editor-background,.monaco-editor .margin,.monaco-editor .view-overlays,.monaco-editor .monaco-scrollable-element) { background-color:#FFFFFF !important; }
+.cognit-shell .monaco-editor :is(input,textarea) { background:transparent !important; color:#101218 !important; }
+.cognit-shell .c-code-surface { background:#FFFFFF !important; color:#17213D !important; }
+.cognit-shell :is(code,kbd,pre) { font-family:'JetBrains Mono',ui-monospace,monospace; }
+.cognit-shell a { text-decoration:none; }
+.cognit-shell .c-feature { box-shadow:none; }
+.cognit-shell :is(.shadow-sm,.shadow-lg) { box-shadow:none !important; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior:auto; } .c-cta,.c-feature { transition:none !important; transform:none !important; } }

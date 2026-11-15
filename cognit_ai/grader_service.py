@@ -13,7 +13,7 @@ def _fallback(reason: str) -> ConceptGrade:
 
 class GraderService:
     def __init__(self, model: str | None = None):
-        self.model = model or os.getenv('COGNIT_GRADER_MODEL', 'claude-sonnet-4-5')
+        self.model = model or os.getenv('COGNIT_GRADER_MODEL', 'claude-haiku-5-5')
 
     def grade(self, question: PrivateQuestion, *, explanation: str, code: str = '',
               test_summary: dict | None = None) -> ConceptGrade:

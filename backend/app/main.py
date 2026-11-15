@@ -1,5 +1,7 @@
 import sys
 import os
+import logging
+import os
 import hmac
 from pathlib import Path
 
@@ -23,6 +25,15 @@ from .routes import assist, attempt, health, next, session, teacher, probe  # no
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     repo.init_db(QUESTIONS)
+    # Opt-in diagnostic, executed only at deployment start. Never log prompts
+    # or credentials. The provider logs only exception class and HTTP status.
+    if os.getenv("COGNIT_DIAGNOSTIC_ON_START", "false").lower() == "true":
+        try:
+            from cognit_ai.provider import ask
+            reply = ask("Reply with the word READY.", {"test": "connectivity"}, model=os.getenv("COGNIT_TUTOR_MODEL", "claude-haiku-5-5"), max_tokens=32)
+            logging.getLogger("cognit.health").warning("COGNIT_AI_SMOKE result=%s", "success" if reply.strip() else "empty_response")
+        except Exception as exc:
+            logging.getLogger("cognit.health").warning("COGNIT_AI_SMOKE result=failed type=%s", type(exc).__name__)
     yield
 
 app = FastAPI(title="COGNIT API", version="0.2.0", lifespan=lifespan)

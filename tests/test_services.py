@@ -30,9 +30,9 @@ def test_hint_plan_gate(q):
 
 def test_hint_ladder_without_api(q,monkeypatch):
     monkeypatch.delenv('ANTHROPIC_API_KEY',raising=False)
-    for n in range(4):
+    for n in range(6):
         r=TutorService().assist(request(q,'hint','What should I consider?'),q.public(),prior_attempts=1,prior_hints=n)
-        assert r.decision == 'limit' and r.hint_level == min(n+1,3)
+        assert r.decision == 'limit' and r.hint_level == n+1
         assert 'def ' not in r.content
 
 def test_private_separation(q):

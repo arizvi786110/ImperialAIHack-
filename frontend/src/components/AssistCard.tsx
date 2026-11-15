@@ -23,7 +23,7 @@ export function AssistCard({ exchange, showQuery = true }: { exchange: AssistExc
       <div className="mb-1.5 flex flex-wrap items-center gap-2">
         <Badge className={decision.className}>{decision.label}</Badge>
         {response.hint_level > 0 && (
-          <Badge className="bg-indigo-50 text-indigo-800 ring-indigo-200">Hint {response.hint_level}/3</Badge>
+          <Badge className="bg-indigo-50 text-indigo-800 ring-indigo-200">Hint {response.hint_level}</Badge>
         )}
         <span className="text-xs text-slate-500">{assistReasonLabel(response.reason_code)}</span>
       </div>

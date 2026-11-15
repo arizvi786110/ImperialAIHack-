@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, NavLink, Route, Routes } from 'react-router-dom'
-import { LandingPage } from './pages/LandingPage'
+import { OrbitalLandingPage } from './pages/OrbitalLandingPage'
+import { SocraticLabPage } from './pages/SocraticLabPage'
 import { StudentPage } from './pages/StudentPage'
 import { TeacherPage } from './pages/TeacherPage'
 
@@ -15,21 +16,23 @@ export default function App() {
           <span className="text-lg font-semibold tracking-[-.045em] text-[#F4F4F6]">COGNIT<span className="text-[#8B7CF6]">.</span></span>
         </NavLink>
         <div className="flex items-center gap-1">
-          <NavLink end to="/" className={navigation}>Overview</NavLink>
-          <NavLink to="/student" className={navigation}>Learn</NavLink>
-          <NavLink to="/teacher" className={navigation}>Educator</NavLink>
+          <NavLink end to="/" className={navigation}>Discover</NavLink>
+          <NavLink to="/challenge" className={navigation}>AI Interview</NavLink>
+          <NavLink to="/student" className={navigation}>Python</NavLink>
+          <NavLink to="/teacher" className={navigation}>Teacher</NavLink>
         </div>
-        <span className="hidden text-xs text-[#A1A5B0] md:block"><span className="mr-2 text-[#59C7B5]">●</span>Adaptive Python lab</span>
+        <span className="hidden text-xs text-[#A1A5B0] md:block"><span className="mr-2 text-[#59C7B5]">●</span>Conceptual learning lab</span>
       </nav>
     </header>
     <Routes>
-      <Route path="/" element={<LandingPage/>} />
+      <Route path="/" element={<OrbitalLandingPage/>} />
+      <Route path="/challenge" element={<SocraticLabPage/>} />
       <Route path="/student" element={<StudentPage/>} />
       <Route path="/teacher" element={<TeacherPage/>} />
       <Route path="*" element={<Navigate to="/" replace/>} />
     </Routes>
     <footer className="c-footer mx-auto flex max-w-[1500px] flex-wrap justify-between gap-2 px-5 py-6 text-xs text-[#767C8A] sm:px-8">
-      <span>© 2026 COGNIT · Intelligence is a process.</span>
+      <span>© 2026 COGNIT · Understanding is a process.</span>
       <span>Hackathon prototype · demo data only</span>
     </footer>
   </div></BrowserRouter>

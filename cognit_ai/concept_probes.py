@@ -46,7 +46,7 @@ def generate(question: PrivateQuestion, explanation: str) -> tuple[str, str]:
         "student_explanation": explanation[:1200],
     }
     try:
-        raw = ask(QUESTION_SYSTEM, payload, model=os.getenv("COGNIT_PROBE_MODEL", "claude-haiku-4-5"), max_tokens=140)
+        raw = ask(QUESTION_SYSTEM, payload, model=os.getenv("COGNIT_PROBE_MODEL", "claude-haiku-5-5"), max_tokens=140)
         data = json.loads(raw)
         prompt = _clean_prompt(data.get("question", "")) if isinstance(data, dict) else None
         return (prompt, "claude_interviewer") if prompt else (fallback, "vetted_template")

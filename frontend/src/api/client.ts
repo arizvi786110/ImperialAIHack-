@@ -17,6 +17,8 @@ import type {
   TeacherSessionView,
   ConceptProbe,
   TeacherRosterEntry,
+  LabSession,
+  LabSessionSummary,
 } from '../types/contracts'
 
 /**
@@ -67,6 +69,14 @@ async function request<T>(method: 'GET' | 'POST', path: string, body?: unknown, 
 const enc = encodeURIComponent
 
 export const api = {
+  labStart: (skill: LabSession['skill'], student_alias: string) =>
+    request<LabSession>('POST', '/api/lab/start', { skill, student_alias }),
+  labReply: (session_id: string, answer: string) =>
+    request<LabSession>('POST', '/api/lab/reply', { session_id, answer }),
+  labSession: (session_id: string) =>
+    request<LabSession>('GET', '/api/lab/session/' + enc(session_id)),
+  labSessions: () =>
+    request<{sessions: LabSessionSummary[]}>('GET', '/api/lab/sessions'),
   startSession: (student_alias: string) => request<SessionStartResponse>('POST', '/api/session/start', { student_alias }),
   /** Reload saved progress after a refresh. Same shape as startSession. */
   getSession: (sessionId: string) => request<SessionStartResponse>('GET', `/api/session/${enc(sessionId)}`),

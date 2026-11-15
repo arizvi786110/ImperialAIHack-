@@ -224,6 +224,12 @@ export interface TeacherAttemptRow {
   effective_concept_score: number
   effective_score: number
   reviews: ReviewRecord[]
+  concept_probe?: {
+    question: string; source: string; answer: string | null;
+    score: number | null; confidence: number | null;
+    rationale: string | null; needs_review: boolean;
+    model_used: string | null;
+  } | null
 }
 
 export interface ScoreBreakdown {

@@ -68,6 +68,7 @@ export function Workspace(props: WorkspaceProps) {
   const [status, setStatus] = useState<RunStatus | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [nextBusy, setNextBusy] = useState(false)
+  const [probeAnswered, setProbeAnswered] = useState(false)
   const [assistBusy, setAssistBusy] = useState<AssistMode | null>(null)
   const [lookups, setLookups] = useState<AssistExchange[]>([])
   const [hints, setHints] = useState<AssistExchange[]>([])
@@ -138,6 +139,7 @@ export function Workspace(props: WorkspaceProps) {
         newIdempotencyKey(),
       )
       setLastAttempt(attempt)
+      setProbeAnswered(false)
       setAttemptCount((n) => n + 1)
       // The server unlocks Hint and Plan Mode after an attempt; pick up the new state.
       const fresh = await api.getSession(sessionId)
@@ -151,7 +153,7 @@ export function Workspace(props: WorkspaceProps) {
   }
 
   async function goNext() {
-    if (!lastAttempt || nextBusy) return
+    if (!lastAttempt || nextBusy || !probeAnswered) return
     setNextBusy(true)
     setError(null)
     try {
@@ -311,11 +313,12 @@ export function Workspace(props: WorkspaceProps) {
                     onNext={goNext}
                     onOpenPlan={() => setTab('plan')}
                     nextBusy={nextBusy}
+                    canAdvance={probeAnswered}
                     planAvailable={planUnlocked}
                   />
                 )}
 
-                {lastAttempt && <ConceptInterview key={lastAttempt.attempt_id} sessionId={sessionId} attemptId={lastAttempt.attempt_id} />}
+                {lastAttempt && <ConceptInterview key={lastAttempt.attempt_id} sessionId={sessionId} attemptId={lastAttempt.attempt_id} onAnswered={() => setProbeAnswered(true)} />}
 
                 <OutputPanel result={result} status={status} tests={question.example_tests} functionName={functionName} />
 

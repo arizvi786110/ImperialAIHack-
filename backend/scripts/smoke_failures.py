@@ -68,9 +68,9 @@ def submit(c, *, explanation, results="pass", headers=None):
     s = c.post("/api/session/start", json={"student_alias": "fail"}).json()["data"]
     q = s["question"]
     if results == "pass":
-        res = [{"id": f"ex{i}", "pass": True} for i in range(len(q["example_tests"]))]
+        res = [{"id": f"example-{i+1}", "pass": True, "actual": t["expected"]} for i, t in enumerate(q["example_tests"])]
     else:
-        res = [{"id": f"ex{i}", "pass": False, "actual": None, "error": "SyntaxError: invalid syntax (line 2)"}
+        res = [{"id": f"example-{i+1}", "pass": False, "actual": None, "error": "SyntaxError: invalid syntax (line 2)"}
                for i in range(len(q["example_tests"]))]
     r = c.post("/api/attempt", json={"session_id": s["session_id"], "question_id": q["id"], "code": "def f(:",
                                      "explanation": explanation, "client_test_results": res})

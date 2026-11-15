@@ -315,3 +315,36 @@ export interface TeacherRosterEntry {
   attempt_count: number
   created_at: string
 }
+
+/** Separate 3-round Socratic interview, scored provisionally by Claude. */
+export interface LabAnswer {
+  question: string
+  answer: string
+  focus: 'mechanism' | 'edge_case' | 'transfer'
+  score: number | null
+  confidence: number
+  feedback: string
+  model_used: string
+}
+export interface LabSession {
+  session_id: string
+  student_alias: string
+  skill: 'loops' | 'hashing' | 'complexity'
+  title: string
+  descriptor: string
+  question: string | null
+  turn: number
+  max_turns: number
+  complete: boolean
+  history: LabAnswer[]
+  score: number | null
+  review_required: boolean
+}
+export interface LabSessionSummary {
+  session_id: string
+  student_alias: string
+  skill: string
+  turn: number
+  complete: boolean
+  created_at: string
+}

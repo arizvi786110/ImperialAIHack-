@@ -222,3 +222,7 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# COGNIT local SQLite database
+backend/cognit.db
+backend/cognit.db-*

@@ -1,0 +1,65 @@
+{
+  "start": "h1_first_unique_char",
+  "questions": [
+    {
+      "id": "h1_first_unique_char",
+      "seed": 0,
+      "skill_tags": ["hashing"],
+      "difficulty": 1,
+      "title": "First unique character",
+      "statement": "Return the index of the first character in s that appears exactly once. Return -1 if there is none.",
+      "function_signature": "def first_unique(s):",
+      "example_tests": [
+        {"input": ["leetcode"], "expected": 0},
+        {"input": ["loveleetcode"], "expected": 2},
+        {"input": ["aabb"], "expected": -1}
+      ],
+      "hint_policy": "Conceptual help only; no solution code.",
+      "max_points": 100,
+      "reference_solution": "def first_unique(s):\n    counts = {}\n    for ch in s:\n        counts[ch] = counts.get(ch, 0) + 1\n    for i, ch in enumerate(s):\n        if counts[ch] == 1:\n            return i\n    return -1\n",
+      "rubric": {
+        "core_idea": "Count frequencies in one pass, then scan in order for the first count of 1.",
+        "complexity": "O(n) time, O(k) extra space; contrast with O(n^2) nested scanning.",
+        "edge_cases": "Empty string, all characters repeated, single character."
+      },
+      "hidden_tests": [
+        {"input": [""], "expected": -1},
+        {"input": ["z"], "expected": 0},
+        {"input": ["aabbc"], "expected": 4}
+      ],
+      "concept_key": "frequency_count_then_ordered_scan",
+      "transfer_id": null,
+      "review_status": "vetted"
+    },
+    {
+      "id": "h1_most_common_char",
+      "seed": 0,
+      "skill_tags": ["hashing"],
+      "difficulty": 1,
+      "title": "Most common character",
+      "statement": "Return the character that appears most often in s. If several tie, return the one that appears first in s. Return None for an empty string.",
+      "function_signature": "def most_common(s):",
+      "example_tests": [
+        {"input": ["hello"], "expected": "l"},
+        {"input": ["abcab"], "expected": "a"},
+        {"input": ["x"], "expected": "x"}
+      ],
+      "hint_policy": "Conceptual help only; no solution code.",
+      "max_points": 100,
+      "reference_solution": "def most_common(s):\n    counts = {}\n    for ch in s:\n        counts[ch] = counts.get(ch, 0) + 1\n    best = None\n    for ch in s:\n        if best is None or counts[ch] > counts[best]:\n            best = ch\n    return best\n",
+      "rubric": {
+        "core_idea": "Count frequencies with a dict, then pick the max while respecting first-occurrence order for ties.",
+        "complexity": "O(n) time, O(k) extra space.",
+        "edge_cases": "Empty string, ties, case sensitivity."
+      },
+      "hidden_tests": [
+        {"input": [""], "expected": null},
+        {"input": ["aabbbcc"], "expected": "b"},
+        {"input": ["Zz"], "expected": "Z"}
+      ],
+      "concept_key": "frequency_count_then_select",
+      "transfer_id": "h1_first_unique_char",
+      "review_status": "vetted"
+    }
+  ]
+}

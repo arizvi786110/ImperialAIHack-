@@ -1,0 +1,16 @@
+# Keep secrets, local data and unrelated code out of the image.
+**/.env
+**/.env.*
+!**/.env.example
+**/*.db
+**/*.db-*
+**/.venv
+**/__pycache__
+**/.pytest_cache
+.git
+frontend
+node_modules
+evals
+examples
+tests
+*.md

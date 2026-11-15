@@ -10,6 +10,7 @@ import { Badge, Card, ErrorBanner } from '../components/ui'
 import { assistReasonLabel, DECISION_STYLE, flagLabel, INFO_FLAGS } from '../student/labels'
 import { loadSnapshot } from '../student/storage'
 import { AttemptDetails } from '../teacher/AttemptDetails'
+import { LabTeacherPanel } from '../components/LabTeacherPanel'
 import type { TeacherRosterEntry, TeacherSessionView } from '../types/contracts'
 
 const fmt = (n: number | null | undefined, suffix = '') => (n === null || n === undefined ? '—' : `${n}${suffix}`)
@@ -93,6 +94,7 @@ export function TeacherPage() {
           {!rosterError && roster.length===0 && <p className="text-sm text-[#A1A5B0]">No students have started an assessment yet.</p>}
         </div>
       </section>
+      <LabTeacherPanel />
       {!sessionId && <SessionPicker onPick={(id) => setParams({ session: id })} />}
       {loading && <p className="text-sm text-slate-500">Loading session…</p>}
       {!loading && error && <ErrorBanner message={error} />}

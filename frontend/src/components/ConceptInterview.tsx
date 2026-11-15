@@ -1,13 +1,14 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { api, errorMessage } from '../api/client'
 import type { ConceptProbe } from '../types/contracts'
 
 interface Props {
   sessionId: string
   attemptId: string
+  onAnswered?: () => void
 }
 
-export function ConceptInterview({ sessionId, attemptId }: Props) {
+export function ConceptInterview({ sessionId, attemptId, onAnswered }: Props) {
   const [probe, setProbe] = useState<ConceptProbe | null>(null)
   const [answer, setAnswer] = useState('')
   const [busy, setBusy] = useState(false)
@@ -19,15 +20,18 @@ export function ConceptInterview({ sessionId, attemptId }: Props) {
       const result = await api.startConceptProbe({ session_id: sessionId, attempt_id: attemptId })
       setProbe(result)
       setAnswer(result.answer ?? '')
+      if (result.answered) onAnswered?.()
     } catch (e) { setError(errorMessage(e)) }
     finally { setBusy(false) }
   }
+  useEffect(() => { void load() }, [attemptId])
   async function submit() {
     if (!answer.trim()) return
     setBusy(true)
     setError('')
     try {
       setProbe(await api.answerConceptProbe({ session_id: sessionId, attempt_id: attemptId, answer: answer.trim() }))
+      onAnswered?.()
     } catch (e) { setError(errorMessage(e)) }
     finally { setBusy(false) }
   }

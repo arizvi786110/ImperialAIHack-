@@ -13,7 +13,45 @@ DOCS = {
     'sort': ('sorted() creates a new sorted list from an iterable.', 'https://docs.python.org/3/library/functions.html#sorted'),
     'string': ('Strings are immutable sequences of Unicode code points.', 'https://docs.python.org/3/library/stdtypes.html#text-sequence-type-str'),
     'complexity': ('Consider how operations scale as input size increases.', 'https://docs.python.org/3/tutorial/datastructures.html'),
+    # Language facts the bank questions rely on. Neutral documentation only: no task-specific recipes.
+    'modulo': ('The % operator returns the remainder after division; in Python the result takes the sign of the divisor.', 'https://docs.python.org/3/reference/expressions.html#binary-arithmetic-operations'),
+    'comparison': ('Comparison operators (<, >, ==, !=, <=, >=) compare two values and evaluate to True or False.', 'https://docs.python.org/3/reference/expressions.html#comparisons'),
+    'sum': ('sum(iterable, start=0) adds the items of an iterable; sum([]) returns 0.', 'https://docs.python.org/3/library/functions.html#sum'),
+    'len': ('len(s) returns the number of items in a container such as a list, string, set or dict.', 'https://docs.python.org/3/library/functions.html#len'),
+    'membership': ('x in s is True when x is an element of s; for sets and dicts this is a hash lookup, for lists it scans the items.', 'https://docs.python.org/3/reference/expressions.html#membership-test-operations'),
+    'if': ('An if statement runs its block only when the condition is true; elif and else handle the other cases.', 'https://docs.python.org/3/reference/compound_stmts.html#the-if-statement'),
+    'while': ('A while statement repeats its block as long as the condition stays true.', 'https://docs.python.org/3/reference/compound_stmts.html#the-while-statement'),
+    'bool': ('True and False are the two bool values; comparisons and membership tests produce them.', 'https://docs.python.org/3/library/stdtypes.html#boolean-type-bool'),
+    'int': ('int is Python\'s integer type: integers can be negative, zero or positive and have unlimited size.', 'https://docs.python.org/3/library/stdtypes.html#numeric-types-int-float-complex'),
+    'function': ('A def statement defines a function; return sends a value back to the caller, and a function without return gives None.', 'https://docs.python.org/3/tutorial/controlflow.html#defining-functions'),
+    'enumerate': ('enumerate(iterable) yields (index, item) pairs while iterating.', 'https://docs.python.org/3/library/functions.html#enumerate'),
+    'counter': ('collections.Counter is a dict subclass for counting hashable items.', 'https://docs.python.org/3/library/collections.html#collections.Counter'),
 }
+# Whole-word patterns per topic (so e.g. "in" doesn't match inside "string"). Most specific first.
+DOC_PATTERNS = [(key, re.compile(p, re.I)) for key, p in [
+    ('modulo', r'%|\bmod(ulo|ulus)?\b|\bremainders?\b|\bdivisib\w*'),
+    ('membership', r'\bmembership\b|\bnot in\b|\bin operator\b|[\'"`]in[\'"`]|\bcontains?\b'),
+    ('counter', r'\bcounter\b|\bcollections\b'),
+    ('enumerate', r'\benumerate\b'),
+    ('sum', r'\bsum\b'),
+    ('len', r'\blen\b|\blength\b'),
+    ('comparison', r'\bcompar\w*|\bgreater than\b|\bless than\b|[<>]=?|==|!='),
+    ('bool', r'\bbool(ean)?s?\b|\btrue\b|\bfalse\b'),
+    ('int', r'\bint(eger)?s?\b|\bnegative numbers?\b'),
+    ('function', r'\bfunctions?\b|\bdef\b|\breturn\b'),
+    ('if', r'\bif statements?\b|\bconditions?\b|\bconditionals?\b|\belif\b|\belse\b'),
+    ('while', r'\bwhile\b'),
+    ('list', r'\blists?\b'),
+    ('dict', r'\bdict(s|ionary|ionaries)?\b'),
+    ('loop', r'\bloops?\b|\biterat\w*'),
+    ('range', r'\brange\b'),
+    ('set', r'\bsets?\b|\bfrozenset\b'),
+    ('sort', r'\bsort(ed|ing)?\b'),
+    ('string', r'\bstr(ing)?s?\b'),
+    ('complexity', r'\bcomplexity\b|\bbig[- ]?o\b|\bo\(\s*n'),
+]]
+LOOKUP_SCOPE = ('Ask about a specific Python concept, for example: lists, dicts, sets, loops, if statements, '
+                'comparisons, the % operator, sum(), len(), the in operator, functions or complexity.')
 # Conservative deterministic pre-filter; adversarial tests are illustrative, not exhaustive.
 BLOCK = re.compile(r'(?i)(full|complete|exact|working|final|entire)\s+(python\s+)?(solution|answer|code|implementation)|(?:write|give|provide|show|generate|output|reveal|paste)\s+(?:me\s+)?(?:the\s+)?(?:code|solution|answer|implementation|hidden\s*tests?|reference\s*solution)|(?:ignore|override|bypass)\s+(?:all\s+)?(?:previous\s+)?(?:rules|instructions|policy)|(?:pretend|act)\s+(?:you\s+are|as)\s+(?:a\s+)?(?:teacher|reviewer|admin)|(?:step.by.step|line.by.line)\s+pseudocode|(?:answer|solution)\s+(?:but|disguised|called)\s+(?:as|like)\s+(?:a\s+)?(?:plan|conceptual)|(?:hidden|private)\s+(?:test|rubric|solution)')
 CODE = re.compile(r'(?m)^\s*(?:def |class |import |from |for |while |if |return |print\(|```)|\b(?:def\s+\w+\s*\(|return\s+\w+\s*\()')
@@ -54,9 +92,8 @@ class TutorService:
             return AssistResponse(decision='limit', content=fallback, hint_level=level, reason_code='SAFE_FALLBACK')
 
     def _lookup(self, query: str) -> AssistResponse:
-        q = query.lower()
-        hits = [(v, url) for key, (v, url) in DOCS.items() if key in q]
+        hits = [DOCS[key] for key, pattern in DOC_PATTERNS if pattern.search(query)]
         if not hits:
-            return AssistResponse(decision='limit', content='Ask about a specific Python concept such as lists, dictionaries, loops, sets, sorting, or strings.', reason_code='REFERENCE_SCOPE')
+            return AssistResponse(decision='limit', content=LOOKUP_SCOPE, reason_code='REFERENCE_SCOPE')
         return AssistResponse(decision='allow', content=' '.join(x[0] for x in hits[:2]),
                               citations=list(dict.fromkeys(x[1] for x in hits[:2])), reason_code='APPROVED_REFERENCE')

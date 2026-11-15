@@ -1,4 +1,4 @@
-# Keep secrets, local data and unrelated code out of the image.
+# Do not put secrets or local student data in Docker images.
 **/.env
 **/.env.*
 !**/.env.example
@@ -8,7 +8,8 @@
 **/__pycache__
 **/.pytest_cache
 .git
-frontend
+frontend/node_modules
+frontend/dist
 node_modules
 evals
 examples

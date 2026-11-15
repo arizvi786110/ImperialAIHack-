@@ -1,39 +1,38 @@
-# ImperialAIHack-
+# Cognit | Imperial AI Hackathon
 
-COGNIT: a real-time university Python assessment prototype. See [MASTER_PLAN.md](MASTER_PLAN.md).
+Cognit is a **demo-only Python assessment** designed to distinguish executable answers from explanations of the underlying concept. Students can run code in a browser, use restricted reference help, and submit reasoning for provisional AI grading and teacher review.
 
-Run the backend first, then the frontend, in two terminals.
+## One-URL team demo
 
-## Backend
+The root [Dockerfile](Dockerfile) builds the React app and serves it through FastAPI on **one origin**. For a shared HTTPS link, follow [docs/TEAM_DEPLOY.md](docs/TEAM_DEPLOY.md). It includes Railway setup, persistent SQLite storage, and a real browser acceptance checklist.
 
-FastAPI + SQLite, in [`backend/`](backend/). It uses the shared AI services in [`cognit_ai/`](cognit_ai/) and the contracts in [`contracts/`](contracts/). Python 3.12 (as in the `Dockerfile`; also tested locally on 3.13).
+Routes: `/student`, `/teacher`, `/api/*`, `/health`.
 
-```bash
-cd backend
-python -m venv .venv
-.venv\Scripts\pip install -r requirements.txt   # macOS/Linux: .venv/bin/pip
-copy .env.example .env                           # macOS/Linux: cp. Add ANTHROPIC_API_KEY, or set COGNIT_AI_ENABLED=false
-.venv\Scripts\python -m uvicorn app.main:app --reload --port 8000
-```
+## Local run (single URL)
 
-With `COGNIT_AI_ENABLED=false` nothing calls the API: the tutor and grader use safe fallbacks, and grades are flagged for teacher review.
+Requires Python 3.11+ and Node 24+.
 
-See [`backend/README.md`](backend/README.md) for tests, the question bank, deployment (Dockerfile) and the endpoint list.
-
-## Frontend
-
-Vite + React + TypeScript + Monaco + Tailwind, in [`frontend/`](frontend/). Requires Node 20+.
-
-```bash
+```sh
+python -m pip install -r backend/requirements.txt -r requirements.txt
 cd frontend
 npm install
-cp .env.example .env   # optional: VITE_API_BASE_URL (empty = same origin via the dev proxy)
-npm run dev            # http://localhost:5173
+npm run build
+cd ..
+python -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
 ```
 
-The frontend needs the backend running. In dev, Vite proxies `/api` and `/health` to `http://localhost:8000`, so `VITE_API_BASE_URL` can be left empty, or set to `http://localhost:8000` (CORS allows it). `VITE_API_URL` is accepted as an alias. When deployed, set `VITE_API_BASE_URL` to the backend's URL, and set the backend's `ALLOWED_ORIGINS` to the frontend's URL. Monaco and Pyodide both load from the jsDelivr CDN, so a network connection is needed. `npm run build` type-checks and builds to `frontend/dist/`; `npm run lint` runs oxlint.
+Open **http://localhost:8000/student**. The React bundle and FastAPI live in the same process.
 
-### Student (`/student`)
+For development with hot reload, run `npm run dev` from `frontend/` (http://localhost:5173) and FastAPI on port 8000. Vite proxies `/api` and `/health` to FastAPI, so `VITE_API_BASE_URL` can be left empty (`VITE_API_URL` is accepted as an alias). If the frontend is hosted separately, set `VITE_API_BASE_URL` to the backend's URL and the backend's `ALLOWED_ORIGINS` to the frontend's URL. Monaco and Pyodide both load from the jsDelivr CDN, so a network connection is needed. `npm run lint` runs oxlint.
+
+See [`backend/README.md`](backend/README.md) for the question bank and the endpoint list.
+
+## Demo questions
+
+Starts with **Count even numbers**. There are six simple curated tasks across loops, hashing and complexity, with paired transfer tasks. All browser test reports remain **untrusted**, and the teacher dashboard has **no authentication**. Use synthetic student data only.
+
+## Student (`/student`)
+
 - **Session:** start with an alias (demo only, no real names). The session id and drafts are kept in `localStorage`, so a refresh resumes where you were (`GET /api/session/{id}`).
 - **Code tab:**
   - Monaco editor and an explanation box. **Run** with Ctrl/Cmd+Enter; **Submit** with Ctrl/Cmd+Shift+Enter.
@@ -45,7 +44,8 @@ The frontend needs the backend running. In dev, Vite proxies `/api` and `/health
   - **Plan Mode:** the student writes their own plan, and the planner raises one issue at a time. "Use this plan" attaches it to the next attempt.
   - Both mark the question as assisted.
 
-### Teacher (`/teacher?session=<id>`)
+## Teacher (`/teacher?session=<id>`)
+
 Demo only: no authentication and no real student data. It reads `GET /api/teacher/session/{id}` and shows:
 - a review queue;
 - the difficulty-weighted score breakdown;
@@ -56,13 +56,32 @@ Demo only: no authentication and no real student data. It reads `GET /api/teache
 
 Teachers can override or approve the concept score with a required note (`POST /api/teacher/review`). Every review is kept as an append-only audit record.
 
-### Running Python (D2)
-**Run** executes the student's code with [Pyodide](https://pyodide.org) (pinned version in `src/runner/pyodide.worker.ts`) inside a Web Worker, following [`backend/RUNNER_CONTRACT.md`](backend/RUNNER_CONTRACT.md):
+## Running Python in the browser
+
+**Run** executes the student's code with [Pyodide](https://pyodide.org) (pinned version in `frontend/src/runner/pyodide.worker.ts`) inside a Web Worker, following [`backend/RUNNER_CONTRACT.md`](backend/RUNNER_CONTRACT.md):
 - each example test calls `fn(*input)`. It passes only when the result has the **same type** and value as `expected`, matching `backend/app/scoring.py`. Result ids are `example-1`, `example-2`, …
 - a fresh worker for every run, with a pre-loaded spare so runs don't wait for Python to download again;
 - timeouts: 2 s per test (or top-level code) and 5 s per run, starting once Python has loaded. A runaway loop gets its worker terminated, and the page stays responsive;
 - syntax errors, exceptions (with traceback), a missing function, `print()` output and blocked imports (`os`, `sys`, `subprocess`, `socket`, `js`, `pyodide`, `importlib`, `__import__`) all produce readable results.
 
-The test harness is plain Python (`src/runner/harness.py`), so you can exercise it with CPython.
+The test harness is plain Python (`frontend/src/runner/harness.py`), so you can exercise it with CPython.
 
 **In-browser execution is a prototype only. It is not a secure exam sandbox**: the import block is best effort, and results sent to the API are untrusted evidence.
+
+## Tests
+
+```sh
+python backend/scripts/validate_bank.py
+python backend/scripts/smoke_e2e.py
+python backend/scripts/smoke_persistence.py
+python backend/scripts/smoke_failures.py
+python -m pytest -q tests --ignore=tests/test_live_tutor.py
+```
+
+The GitHub Actions workflow also builds the frontend, checks single-origin routes, and builds the deployment Docker image.
+
+## AI configuration
+
+The app operates without model credits with `COGNIT_AI_ENABLED=false`: concept scores are provisional zero, flagged for teacher review. For live grading, put a **new, private** `ANTHROPIC_API_KEY` in the hosting service's environment and set `COGNIT_AI_ENABLED=true`. Never commit API keys.
+
+See [MASTER_PLAN.md](MASTER_PLAN.md) for team ownership and product scope. **This is not a cheat-proof exam or a psychometrically validated assessment.**

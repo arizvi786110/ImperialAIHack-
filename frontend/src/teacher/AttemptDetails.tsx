@@ -46,7 +46,7 @@ export function AttemptDetails({ attempt, index, onReviewed }: { attempt: Teache
 
       <div className="grid gap-4 border-t border-slate-200 p-3 lg:grid-cols-2">
         <Block title="Code">
-          <pre className="max-h-64 overflow-auto rounded-md bg-slate-900 p-3 font-mono text-xs text-slate-100">{attempt.code}</pre>
+          <pre className="max-h-64 overflow-auto rounded-md border border-slate-200 bg-white p-3 font-mono text-xs text-slate-800">{attempt.code}</pre>
         </Block>
         <div className="flex min-w-0 flex-col gap-3">
           <Block title="Explanation">
@@ -68,6 +68,24 @@ export function AttemptDetails({ attempt, index, onReviewed }: { attempt: Teache
             </ul>
           </Block>
         </div>
+
+        {attempt.concept_probe && (
+          <Block title="Independent reasoning interview">
+            <div className="space-y-3 rounded-xl border border-violet-100 bg-violet-50/60 p-4 text-sm">
+              <div className="text-xs font-bold uppercase tracking-wide text-violet-700">Follow-up question</div>
+              <p className="font-semibold leading-6 text-slate-800">{attempt.concept_probe.question}</p>
+              <div className="text-xs font-bold uppercase tracking-wide text-violet-700">Student response</div>
+              <p className="whitespace-pre-wrap leading-6 text-slate-700">{attempt.concept_probe.answer ?? 'Not answered yet'}</p>
+              {attempt.concept_probe.answer !== null && (
+                <div className="rounded-xl bg-white p-3">
+                  <strong className="text-violet-700">{attempt.concept_probe.score === null ? 'Awaiting teacher review' : String(attempt.concept_probe.score) + ' / 15 reasoning evidence'}</strong>
+                  <p className="mt-2 leading-6 text-slate-600">{attempt.concept_probe.rationale}</p>
+                  {attempt.concept_probe.needs_review && <p className="mt-2 text-xs text-amber-700">Review required</p>}
+                </div>
+              )}
+            </div>
+          </Block>
+        )}
 
         <Block title="Scoring">
           {ev ? (

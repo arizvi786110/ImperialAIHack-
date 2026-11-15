@@ -1,0 +1,50 @@
+import Editor, { type OnMount } from '@monaco-editor/react'
+import { useEffect, useRef } from 'react'
+
+interface CodeEditorProps {
+  value: string
+  onChange: (value: string) => void
+  /** Ctrl/Cmd+Enter inside the editor. */
+  onRun?: () => void
+}
+
+/**
+ * Monaco (Python). Uses @monaco-editor/react's default CDN loader.
+ * Fallback if offline loading fails: bundle via loader.config({ monaco }).
+ */
+export function CodeEditor({ value, onChange, onRun }: CodeEditorProps) {
+  // Keep latest callback without re-registering the Monaco command.
+  const runRef = useRef(onRun)
+  useEffect(() => {
+    runRef.current = onRun
+  }, [onRun])
+
+  const handleMount: OnMount = (editor, monaco) => {
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => runRef.current?.())
+  }
+
+  return (
+    <div className="h-full min-h-[280px] overflow-hidden rounded-md border border-slate-300">
+      <Editor
+        height="100%"
+        defaultLanguage="python"
+        value={value}
+        onChange={(v) => onChange(v ?? '')}
+        onMount={handleMount}
+        theme="vs-dark"
+        loading={<div className="p-4 text-sm text-slate-500">Loading editor…</div>}
+        options={{
+          fontSize: 14,
+          minimap: { enabled: false },
+          scrollBeyondLastLine: false,
+          tabSize: 4,
+          insertSpaces: true,
+          automaticLayout: true,
+          wordWrap: 'on',
+          ariaLabel: 'Python code editor. Press Control or Command plus Enter to run.',
+          accessibilitySupport: 'auto',
+        }}
+      />
+    </div>
+  )
+}

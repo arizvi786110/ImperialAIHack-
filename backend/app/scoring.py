@@ -1,15 +1,16 @@
-"""TEMPORARY scoring stand-in until Ahmed's scoring.py (H3) lands.
+"""Attempt scoring. Routes only call `score_attempt` and `effective_score`.
 
-Swap point: replace the bodies of `score_attempt` and `effective_score` (or import
-Ahmed's functions here). Routes only call these two functions.
+Test verification in `summarise_tests` is Ahmed's (H3): each example test counts only
+if exactly one `example-N` result reports the expected value with the expected type.
+Regression tests: tests/test_scoring_integrity.py.
 
 Plan rubric (per question, 100 points):
   functional tests 50 + edge-case tests 20 + conceptual explanation 30
 Difficulty weights: level 1 = x1, level 2 = x1.5, level 3 = x2 (prototype choice, not calibrated).
 
-Known limitation (agreed, revisit in A4): hidden tests are never sent to the browser,
-so the 70 code points are scaled from the EXAMPLE tests the browser reports. These
-results are untrusted client evidence.
+Known limitation (agreed in A4, see backend/RUNNER_CONTRACT.md): hidden tests are never
+sent to the browser, so the 70 code points are scaled from the EXAMPLE tests the browser
+reports. These results are untrusted client evidence.
 """
 
 from dataclasses import dataclass

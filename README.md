@@ -201,8 +201,7 @@ ImperialAIHack--main/
 ├── evals/                  # Grading and adversarial evaluations
 ├── docs/                   # Deployment and assessment design notes
 ├── Dockerfile              # Single-service production build
-├── requirements.txt
-└── MASTER_PLAN.md
+└── requirements.txt
 ```
 
 ## Getting started
@@ -365,7 +364,7 @@ Created for the **Imperial AI Hackathon 2026**, **Reply Challenge: AI on Campus*
 | FastAPI backend, persistence, endpoints and execution integration | **Aalia** |
 | React frontend, coding experience and demo video | **Debangshu** |
 
-The team's master execution plan is available in [`MASTER_PLAN.md`](MASTER_PLAN.md). Roles above describe assigned ownership; the repository is the source of truth for the delivered implementation.
+Roles above describe assigned ownership; the repository is the source of truth for the delivered implementation.
 
 ## Acknowledgements
 

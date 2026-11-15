@@ -1,6 +1,5 @@
 /**
- * TypeScript mirror of the frozen integration contract (MASTER_PLAN.md,
- * "Integration contract, freeze at 18:45 GMT"). Source of truth is the
+ * TypeScript mirror of the frozen integration contract. Source of truth is the
  * Pydantic schemas in /contracts/models.py (which re-exports cognit_ai/contracts.py)
  * and, for the loosely-typed teacher payload, backend/app/routes/teacher.py.
  * Last synced against main at 0945e43 (backend PR #3). Keep in sync, no silent changes.

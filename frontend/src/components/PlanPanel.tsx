@@ -15,7 +15,7 @@ interface PlanPanelProps {
 const MAX_QUERY = 1500
 
 /**
- * Plan Mode (MASTER_PLAN.md spec): the student writes their own outline; the planner asks
+ * Plan Mode: the student writes their own outline; the planner asks
  * one Socratic question / raises one issue at a time and never gives code or a full algorithm.
  */
 export function PlanPanel({ plan, onPlanChange, attachedPlan, onUsePlan, replies, onAsk, busy }: PlanPanelProps) {

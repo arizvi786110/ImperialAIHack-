@@ -54,7 +54,7 @@ def call(c: TestClient, method: str, url: str, body=None, student=True, headers=
 
 
 def passing_results(question: dict) -> list[dict]:
-    return [{"id": f"ex{i}", "pass": True, "actual": t["expected"], "error": None}
+    return [{"id": f"example-{i+1}", "pass": True, "actual": t["expected"], "error": None}
             for i, t in enumerate(question["example_tests"])]
 
 

@@ -1,0 +1,487 @@
+{
+  "start": "demo_count_even",
+  "questions": [
+    {
+      "id": "demo_count_even",
+      "seed": 0,
+      "skill_tags": [
+        "loops"
+      ],
+      "difficulty": 1,
+      "title": "Count even numbers",
+      "statement": "Return the number of even integers in values.",
+      "function_signature": "def count_even(values):",
+      "example_tests": [
+        {
+          "input": [
+            [
+              2,
+              3,
+              4
+            ]
+          ],
+          "expected": 2
+        },
+        {
+          "input": [
+            [
+              1,
+              3,
+              5
+            ]
+          ],
+          "expected": 0
+        },
+        {
+          "input": [
+            [
+              0,
+              -2,
+              7
+            ]
+          ],
+          "expected": 2
+        }
+      ],
+      "hint_policy": "after_first_attempt",
+      "max_points": 100,
+      "reference_solution": "def count_even(values):\n    return sum(x % 2 == 0 for x in values)\n",
+      "rubric": {
+        "core_idea": "Explain the exact rule or data structure used, not only that a loop or algorithm was used.",
+        "complexity": "Describe time and extra-space cost.",
+        "edge_cases": "Discuss an empty list, duplicates, zero or negatives as relevant."
+      },
+      "hidden_tests": [
+        {
+          "input": [
+            []
+          ],
+          "expected": 0
+        },
+        {
+          "input": [
+            [
+              2,
+              2,
+              2
+            ]
+          ],
+          "expected": 3
+        },
+        {
+          "input": [
+            [
+              -3,
+              -4,
+              0
+            ]
+          ],
+          "expected": 2
+        }
+      ],
+      "concept_key": "count_even",
+      "transfer_id": null,
+      "review_status": "vetted"
+    },
+    {
+      "id": "demo_count_positive",
+      "seed": 0,
+      "skill_tags": [
+        "loops"
+      ],
+      "difficulty": 1,
+      "title": "Count positive numbers",
+      "statement": "Return the number of strictly positive integers in values. Zero is not positive.",
+      "function_signature": "def count_positive(values):",
+      "example_tests": [
+        {
+          "input": [
+            [
+              -1,
+              0,
+              2,
+              3
+            ]
+          ],
+          "expected": 2
+        },
+        {
+          "input": [
+            [
+              1,
+              2
+            ]
+          ],
+          "expected": 2
+        },
+        {
+          "input": [
+            [
+              0,
+              0
+            ]
+          ],
+          "expected": 0
+        }
+      ],
+      "hint_policy": "after_first_attempt",
+      "max_points": 100,
+      "reference_solution": "def count_positive(values):\n    return sum(x > 0 for x in values)\n",
+      "rubric": {
+        "core_idea": "Explain the exact rule or data structure used, not only that a loop or algorithm was used.",
+        "complexity": "Describe time and extra-space cost.",
+        "edge_cases": "Discuss an empty list, duplicates, zero or negatives as relevant."
+      },
+      "hidden_tests": [
+        {
+          "input": [
+            []
+          ],
+          "expected": 0
+        },
+        {
+          "input": [
+            [
+              -4,
+              -2
+            ]
+          ],
+          "expected": 0
+        },
+        {
+          "input": [
+            [
+              4,
+              -1,
+              7
+            ]
+          ],
+          "expected": 2
+        }
+      ],
+      "concept_key": "count_positive",
+      "transfer_id": "demo_count_even",
+      "review_status": "vetted"
+    },
+    {
+      "id": "demo_sum_even",
+      "seed": 0,
+      "skill_tags": [
+        "complexity"
+      ],
+      "difficulty": 2,
+      "title": "Sum even numbers",
+      "statement": "Return the sum of all even integers in values. Empty input gives zero.",
+      "function_signature": "def sum_even(values):",
+      "example_tests": [
+        {
+          "input": [
+            [
+              2,
+              3,
+              4
+            ]
+          ],
+          "expected": 6
+        },
+        {
+          "input": [
+            [
+              1,
+              3,
+              5
+            ]
+          ],
+          "expected": 0
+        },
+        {
+          "input": [
+            [
+              0,
+              -2,
+              7
+            ]
+          ],
+          "expected": -2
+        }
+      ],
+      "hint_policy": "after_first_attempt",
+      "max_points": 100,
+      "reference_solution": "def sum_even(values):\n    return sum(x for x in values if x % 2 == 0)\n",
+      "rubric": {
+        "core_idea": "Explain the exact rule or data structure used, not only that a loop or algorithm was used.",
+        "complexity": "Describe time and extra-space cost.",
+        "edge_cases": "Discuss an empty list, duplicates, zero or negatives as relevant."
+      },
+      "hidden_tests": [
+        {
+          "input": [
+            []
+          ],
+          "expected": 0
+        },
+        {
+          "input": [
+            [
+              2,
+              2,
+              2
+            ]
+          ],
+          "expected": 6
+        },
+        {
+          "input": [
+            [
+              -3,
+              -4,
+              0
+            ]
+          ],
+          "expected": -4
+        }
+      ],
+      "concept_key": "sum_even",
+      "transfer_id": null,
+      "review_status": "vetted"
+    },
+    {
+      "id": "demo_sum_positive",
+      "seed": 0,
+      "skill_tags": [
+        "complexity"
+      ],
+      "difficulty": 2,
+      "title": "Sum positive numbers",
+      "statement": "Return the sum of strictly positive integers in values.",
+      "function_signature": "def sum_positive(values):",
+      "example_tests": [
+        {
+          "input": [
+            [
+              -1,
+              0,
+              2,
+              3
+            ]
+          ],
+          "expected": 5
+        },
+        {
+          "input": [
+            [
+              1,
+              2
+            ]
+          ],
+          "expected": 3
+        },
+        {
+          "input": [
+            [
+              0,
+              0
+            ]
+          ],
+          "expected": 0
+        }
+      ],
+      "hint_policy": "after_first_attempt",
+      "max_points": 100,
+      "reference_solution": "def sum_positive(values):\n    return sum(x for x in values if x > 0)\n",
+      "rubric": {
+        "core_idea": "Explain the exact rule or data structure used, not only that a loop or algorithm was used.",
+        "complexity": "Describe time and extra-space cost.",
+        "edge_cases": "Discuss an empty list, duplicates, zero or negatives as relevant."
+      },
+      "hidden_tests": [
+        {
+          "input": [
+            []
+          ],
+          "expected": 0
+        },
+        {
+          "input": [
+            [
+              -4,
+              -2
+            ]
+          ],
+          "expected": 0
+        },
+        {
+          "input": [
+            [
+              4,
+              -1,
+              7
+            ]
+          ],
+          "expected": 11
+        }
+      ],
+      "concept_key": "sum_positive",
+      "transfer_id": "demo_sum_even",
+      "review_status": "vetted"
+    },
+    {
+      "id": "demo_has_duplicate",
+      "seed": 0,
+      "skill_tags": [
+        "hashing"
+      ],
+      "difficulty": 3,
+      "title": "Detect duplicates",
+      "statement": "Return True if any value appears more than once, otherwise False.",
+      "function_signature": "def has_duplicate(values):",
+      "example_tests": [
+        {
+          "input": [
+            [
+              1,
+              2,
+              1
+            ]
+          ],
+          "expected": true
+        },
+        {
+          "input": [
+            [
+              1,
+              2,
+              3
+            ]
+          ],
+          "expected": false
+        },
+        {
+          "input": [
+            [
+              3,
+              3
+            ]
+          ],
+          "expected": true
+        }
+      ],
+      "hint_policy": "after_first_attempt",
+      "max_points": 100,
+      "reference_solution": "def has_duplicate(values):\n    return len(values) != len(set(values))\n",
+      "rubric": {
+        "core_idea": "Explain the exact rule or data structure used, not only that a loop or algorithm was used.",
+        "complexity": "Describe time and extra-space cost.",
+        "edge_cases": "Discuss an empty list, duplicates, zero or negatives as relevant."
+      },
+      "hidden_tests": [
+        {
+          "input": [
+            []
+          ],
+          "expected": false
+        },
+        {
+          "input": [
+            [
+              0
+            ]
+          ],
+          "expected": false
+        },
+        {
+          "input": [
+            [
+              -2,
+              4,
+              -2
+            ]
+          ],
+          "expected": true
+        }
+      ],
+      "concept_key": "has_duplicate",
+      "transfer_id": null,
+      "review_status": "vetted"
+    },
+    {
+      "id": "demo_count_distinct",
+      "seed": 0,
+      "skill_tags": [
+        "hashing"
+      ],
+      "difficulty": 3,
+      "title": "Count distinct numbers",
+      "statement": "Return the number of distinct integers in values.",
+      "function_signature": "def count_distinct(values):",
+      "example_tests": [
+        {
+          "input": [
+            [
+              1,
+              2,
+              1
+            ]
+          ],
+          "expected": 2
+        },
+        {
+          "input": [
+            [
+              1,
+              2,
+              3
+            ]
+          ],
+          "expected": 3
+        },
+        {
+          "input": [
+            [
+              3,
+              3
+            ]
+          ],
+          "expected": 1
+        }
+      ],
+      "hint_policy": "after_first_attempt",
+      "max_points": 100,
+      "reference_solution": "def count_distinct(values):\n    return len(set(values))\n",
+      "rubric": {
+        "core_idea": "Explain the exact rule or data structure used, not only that a loop or algorithm was used.",
+        "complexity": "Describe time and extra-space cost.",
+        "edge_cases": "Discuss an empty list, duplicates, zero or negatives as relevant."
+      },
+      "hidden_tests": [
+        {
+          "input": [
+            []
+          ],
+          "expected": 0
+        },
+        {
+          "input": [
+            [
+              0
+            ]
+          ],
+          "expected": 1
+        },
+        {
+          "input": [
+            [
+              -2,
+              4,
+              -2
+            ]
+          ],
+          "expected": 2
+        }
+      ],
+      "concept_key": "count_distinct",
+      "transfer_id": "demo_has_duplicate",
+      "review_status": "vetted"
+    }
+  ]
+}

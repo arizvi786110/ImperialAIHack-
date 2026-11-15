@@ -6,6 +6,8 @@ POST /api/teacher/review        override/approve concept score; append-only audi
 
 from typing import Any, Optional
 from sqlalchemy import select
+from ..db.models import SessionRow
+from sqlalchemy import select
 from ..db.models import ConceptProbeRow
 
 from fastapi import APIRouter, Depends
@@ -40,6 +42,23 @@ def _effective(ev: Optional[EvaluationRow], review: Optional[TeacherReviewRow]) 
 
 def _mean(xs: list[float]) -> Optional[float]:
     return round(sum(xs) / len(xs), 1) if xs else None
+
+
+@router.get("/sessions", response_model=Envelope[dict])
+def teacher_roster(db: Session = Depends(get_db)) -> Envelope[dict]:
+    """Prototype roster of recent sessions, using student-provided demo aliases."""
+    rows = db.scalars(select(SessionRow).order_by(SessionRow.created_at.desc()).limit(100)).all()
+    return Envelope(ok=True, data={"sessions": [
+        {
+            "session_id": row.id,
+            "student_alias": row.student_alias,
+            "stage": row.stage,
+            "difficulty": row.difficulty,
+            "questions_served": row.questions_served,
+            "attempt_count": len(repo.list_attempts(db, row.id)),
+            "created_at": row.created_at.isoformat(),
+        } for row in rows
+    ]})
 
 
 @router.get("/session/{session_id}", response_model=Envelope[TeacherSessionResponse])

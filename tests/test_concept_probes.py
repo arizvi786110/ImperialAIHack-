@@ -63,11 +63,12 @@ def test_no_probe_without_existing_attempt():
         assert res.status_code == 404
 
 
-def test_shared_access_code_protects_ai_routes(monkeypatch):
-    monkeypatch.setenv("COGNIT_DEMO_ACCESS_CODE", "test-only-team-secret")
+def test_public_demo_sessions_without_shared_code(monkeypatch):
+    monkeypatch.delenv("COGNIT_DEMO_ACCESS_CODE", raising=False)
     with TestClient(app) as client:
         assert client.get("/health").status_code == 200
-        assert client.post("/api/session/start", json={"student_alias": "protected"}).status_code == 401
-        allowed = client.post("/api/session/start", json={"student_alias": "protected"},
-                              headers={"X-Cognit-Demo-Key": "test-only-team-secret"})
+        allowed = client.post("/api/session/start", json={"student_alias": "roster-synthetic"})
         assert allowed.status_code == 200
+        roster = client.get("/api/teacher/sessions")
+        assert roster.status_code == 200
+        assert any(x["student_alias"] == "roster-synthetic" for x in roster.json()["data"]["sessions"])

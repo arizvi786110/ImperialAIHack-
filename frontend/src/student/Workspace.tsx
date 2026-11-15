@@ -8,6 +8,7 @@ import { AttemptResult } from '../components/AttemptResult'
 import type { AssistExchange } from '../components/AssistCard'
 import { ConceptInterview } from '../components/ConceptInterview'
 import { CodeEditor } from '../components/CodeEditor'
+import { SkillConstellation } from '../components/SkillConstellation'
 import { HintBox } from '../components/HintBox'
 import { OutputPanel } from '../components/OutputPanel'
 import { PlanPanel } from '../components/PlanPanel'
@@ -249,6 +250,8 @@ export function Workspace(props: WorkspaceProps) {
           </button>
         </div>
       )}
+
+      <SkillConstellation sessionId={sessionId} active={question.skill_tags[0] ?? "loops"} />
 
       <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(310px,0.9fr)_minmax(0,1.35fr)]">
         <aside className="min-w-0 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_15px_40px_-25px_rgba(30,41,59,0.28)] lg:sticky lg:top-24 lg:max-h-[calc(100dvh-7rem)] lg:overflow-y-auto">

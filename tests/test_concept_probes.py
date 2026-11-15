@@ -61,3 +61,13 @@ def test_no_probe_without_existing_attempt():
         sid = client.post("/api/session/start", json={"student_alias": "probe-negative"}).json()["data"]["session_id"]
         res = client.post("/api/probe/start", json={"session_id": sid, "attempt_id": "a_unknown"})
         assert res.status_code == 404
+
+
+def test_shared_access_code_protects_ai_routes(monkeypatch):
+    monkeypatch.setenv("COGNIT_DEMO_ACCESS_CODE", "test-only-team-secret")
+    with TestClient(app) as client:
+        assert client.get("/health").status_code == 200
+        assert client.post("/api/session/start", json={"student_alias": "protected"}).status_code == 401
+        allowed = client.post("/api/session/start", json={"student_alias": "protected"},
+                              headers={"X-Cognit-Demo-Key": "test-only-team-secret"})
+        assert allowed.status_code == 200

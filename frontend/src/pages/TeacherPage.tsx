@@ -1,56 +1,302 @@
-import {useEffect,useState} from 'react'
-import {getTeacher,reviewAttempt} from '../api/client'
+/**
+ * Teacher dashboard (D5). Renders GET /api/teacher/session/{id}: real stored data only.
+ * DEMO ONLY: no authentication, no real student data.
+ */
+import { useCallback, useEffect, useId, useState, type SubmitEvent } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { api, errorMessage } from '../api/client'
+import { btn, formatTime, input } from '../components/styles'
+import { Badge, Card, ErrorBanner } from '../components/ui'
+import { assistReasonLabel, DECISION_STYLE, flagLabel, INFO_FLAGS } from '../student/labels'
+import { loadSnapshot } from '../student/storage'
+import { AttemptDetails } from '../teacher/AttemptDetails'
+import type { TeacherSessionView } from '../types/contracts'
 
-type Row = {attempt_id:string,title:string,difficulty:number,skill_tags:string[],assisted:boolean,
-  explanation:string,effective_score:number,evaluation?:{code_score:number,concept_score:number,rationale:string,flags:string[],review_required:boolean}|null,
-  reviews:Array<{reviewer_note:string,effective_score:number}>,review_status:string}
-type Dashboard = {attempts:Row[],score_breakdown:{overall_percent:number|null,note:string},
-  mastery_by_skill:Record<string,{independent_transfer_correct:number,independent_transfer_total:number,heuristic_mastery:number|null}>,
-  assisted_vs_independent:{assisted:{count:number,mean_score:number|null},independent:{count:number,mean_score:number|null}},
-  help_log:Array<{mode:string,decision:string,query:string}>,review_flags:unknown[]}
-const button='rounded bg-indigo-600 px-3 py-2 text-sm text-white disabled:opacity-50'
-export function TeacherPage(){
- const [id,setId]=useState(()=>localStorage.getItem('cognit-team-session')??'')
- const [data,setData]=useState<Dashboard|null>(null)
- const [error,setError]=useState('')
- const [busy,setBusy]=useState(false)
- const [notes,setNotes]=useState<Record<string,string>>({})
- const [scores,setScores]=useState<Record<string,string>>({})
- async function refresh(){
-  if(!id.trim())return
-  setBusy(true);setError('')
-  try{const response=await getTeacher(id.trim());setData(response as Dashboard)}
-  catch(e){setError(String(e))}finally{setBusy(false)}
- }
- useEffect(()=>{if(id)void refresh()},[])
- async function save(attemptId:string){
-  const score=Number(scores[attemptId])
-  const note=(notes[attemptId]??'').trim()
-  if(!note||scores[attemptId]===undefined||!Number.isFinite(score)||score<0||score>30){setError('Enter a concept score between 0 and 30 and a reviewer note.');return}
-  setBusy(true);setError('')
-  try{await reviewAttempt(attemptId,score,note);await refresh()}
-  catch(e){setError(String(e))}finally{setBusy(false)}
- }
- return <main className="mx-auto max-w-7xl space-y-5 px-4 py-6">
-  <header><h1 className="text-2xl font-semibold">Teacher evidence dashboard</h1><p className="text-sm text-amber-800">Prototype only. No authentication. Use synthetic student data. Browser test evidence is untrusted.</p></header>
-  <div className="flex gap-2"><input aria-label="Session ID" className="min-w-0 flex-1 rounded border p-2" value={id} onChange={e=>setId(e.target.value)} placeholder="Session ID"/><button className={button} disabled={busy} onClick={()=>void refresh()}>Refresh</button></div>
-  {error&&<p role="alert" className="rounded bg-rose-50 p-2 text-rose-700">{error}</p>}
-  {!data?<p className="text-slate-500">Start an assessment to view real saved attempts.</p>:<>
-   <section className="grid gap-3 md:grid-cols-3">
-    <div className="rounded border bg-white p-4"><p>Weighted score</p><strong className="text-2xl">{data.score_breakdown.overall_percent??0}%</strong></div>
-    <div className="rounded border bg-white p-4"><p>Assisted attempts</p><strong className="text-2xl">{data.assisted_vs_independent.assisted.count}</strong></div>
-    <div className="rounded border bg-white p-4"><p>Independent attempts</p><strong className="text-2xl">{data.assisted_vs_independent.independent.count}</strong></div>
-   </section>
-   <section className="rounded border bg-white p-4"><h2 className="mb-2 font-semibold">Mastery indicators (heuristic only)</h2>{Object.entries(data.mastery_by_skill).length===0?<p>No progress yet.</p>:Object.entries(data.mastery_by_skill).map(([skill,m])=><p key={skill}>{skill}: {m.independent_transfer_correct}/{m.independent_transfer_total} independent transfers correct · indicator {m.heuristic_mastery??'insufficient evidence'}</p>)}</section>
-   <section className="space-y-3"><h2 className="font-semibold">Actual saved attempts</h2>{data.attempts.map(a=><article key={a.attempt_id} className="rounded border bg-white p-4">
-    <div className="flex justify-between gap-3"><strong>{a.title} · Level {a.difficulty}</strong><strong>{a.effective_score}/100</strong></div>
-    <p className="text-sm">{a.assisted?'Assisted':'Independent'} · {a.skill_tags.join(', ')} · {a.review_status}</p>
-    <p className="mt-1 text-sm">Code {a.evaluation?.code_score??0}/70 · Explanation {a.evaluation?.concept_score??0}/30</p>
-    <details className="mt-2"><summary className="cursor-pointer text-sm">Student explanation and AI rationale</summary><p className="my-2 whitespace-pre-wrap text-sm">{a.explanation||'(empty)'}</p><p className="text-sm">{a.evaluation?.rationale}</p><p className="text-xs">{a.evaluation?.flags?.join(', ')}</p></details>
-    <div className="mt-3 flex flex-wrap gap-2"><input className="w-28 rounded border p-2" type="number" min="0" max="30" aria-label="New concept score" value={scores[a.attempt_id]??''} onChange={e=>setScores(p=>({...p,[a.attempt_id]:e.target.value}))} placeholder="0 to 30"/><input className="min-w-40 flex-1 rounded border p-2" aria-label="Review note" value={notes[a.attempt_id]??''} onChange={e=>setNotes(p=>({...p,[a.attempt_id]:e.target.value}))} placeholder="Reason for override"/><button className={button} disabled={busy} onClick={()=>void save(a.attempt_id)}>Save review</button></div>
-    {a.reviews?.map((review,i)=><p key={i} className="mt-1 text-xs">Review: {review.reviewer_note} · {review.effective_score}/100</p>)}
-   </article>)}</section>
-   <section className="rounded border bg-white p-4"><h2 className="font-semibold">Recorded help requests</h2>{data.help_log.map((x,i)=><p key={i} className="text-sm">{x.mode}: {x.decision} · {x.query}</p>)}</section>
-  </>}
- </main>
+const fmt = (n: number | null | undefined, suffix = '') => (n === null || n === undefined ? '—' : `${n}${suffix}`)
+
+export function TeacherPage() {
+  const [params, setParams] = useSearchParams()
+  const sessionId = params.get('session')
+  const [view, setView] = useState<TeacherSessionView | null>(null)
+  const [loadedFor, setLoadedFor] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [refreshing, setRefreshing] = useState(false)
+
+  const fetchView = useCallback(async (id: string) => {
+    try {
+      setView(await api.getTeacherSession(id))
+      setLoadedFor(id)
+      setError(null)
+    } catch (err) {
+      setView(null)
+      setLoadedFor(id)
+      setError(errorMessage(err))
+    } finally {
+      setRefreshing(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    // Fetch-on-navigation: fetchView only sets state after its awaited request resolves.
+    // oxlint-disable-next-line react/set-state-in-effect
+    if (sessionId) void fetchView(sessionId)
+  }, [sessionId, fetchView])
+
+  function refresh() {
+    if (!sessionId) return
+    setRefreshing(true)
+    void fetchView(sessionId)
+  }
+
+  const loading = sessionId !== null && loadedFor !== sessionId
+
+  return (
+    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6">
+      <header className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-baseline gap-3">
+          <h1 className="text-xl font-semibold text-slate-900">Teacher review</h1>
+          <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-800 ring-1 ring-amber-200">
+            Demo only · no authentication · no real student data
+          </span>
+        </div>
+        {sessionId && (
+          <div className="flex items-center gap-2 text-xs text-slate-500">
+            Session <code className="rounded bg-slate-200 px-1.5 py-0.5 text-slate-800">{sessionId}</code>
+            <button type="button" onClick={refresh} disabled={refreshing || loading} className={btn.small}>
+              {refreshing ? 'Refreshing…' : 'Refresh'}
+            </button>
+            <button type="button" onClick={() => setParams({})} className={btn.small}>
+              Change
+            </button>
+          </div>
+        )}
+      </header>
+
+      {!sessionId && <SessionPicker onPick={(id) => setParams({ session: id })} />}
+      {loading && <p className="text-sm text-slate-500">Loading session…</p>}
+      {!loading && error && <ErrorBanner message={error} />}
+      {!loading && view && <Dashboard view={view} onReviewed={refresh} />}
+    </div>
+  )
+}
+
+function SessionPicker({ onPick }: { onPick: (id: string) => void }) {
+  const id = useId()
+  const [value, setValue] = useState('')
+  const recent = loadSnapshot()
+
+  function submit(e: SubmitEvent) {
+    e.preventDefault()
+    if (value.trim()) onPick(value.trim())
+  }
+
+  return (
+    <Card className="max-w-xl">
+      <form onSubmit={submit} className="flex flex-col gap-3">
+        <label htmlFor={id} className="text-sm font-semibold text-slate-900">
+          Session ID
+        </label>
+        <div className="flex gap-2">
+          <input id={id} value={value} onChange={(e) => setValue(e.target.value)} className={input} placeholder="s_…" />
+          <button type="submit" disabled={!value.trim()} className={`${btn.primary} shrink-0`}>
+            Open
+          </button>
+        </div>
+        {recent && (
+          <p className="text-sm text-slate-600">
+            Or open the latest student session on this device:{' '}
+            <button type="button" onClick={() => onPick(recent.sessionId)} className="font-medium text-indigo-700 underline">
+              {recent.alias} ({recent.sessionId})
+            </button>
+          </p>
+        )}
+      </form>
+    </Card>
+  )
+}
+
+function Dashboard({ view, onReviewed }: { view: TeacherSessionView; onReviewed: () => void }) {
+  const titles = Object.fromEntries(view.attempts.map((a) => [a.question_id, a.title]))
+  const { score_breakdown: sb, assisted_vs_independent: avi } = view
+  const skills = Object.entries(view.mastery_by_skill)
+
+  return (
+    <>
+      {view.review_flags.length > 0 && (
+        <section aria-labelledby="flags" className="rounded-lg border border-rose-200 bg-rose-50/60 p-5">
+          <h2 id="flags" className="text-sm font-semibold text-rose-900">
+            Needs review ({view.review_flags.length})
+          </h2>
+          <ul className="mt-2 flex flex-col gap-1.5 text-sm">
+            {view.review_flags.map((f) => (
+              <li key={f.attempt_id} className="flex flex-wrap items-center gap-2">
+                <a href={`#attempt-${f.attempt_id}`} onClick={() => openAttempt(f.attempt_id)} className="font-medium text-rose-900 underline">
+                  {titles[f.question_id] ?? f.question_id}
+                </a>
+                <span className="text-xs text-rose-800">
+                  {f.flags.filter((x) => !INFO_FLAGS.has(x)).map(flagLabel).join(' · ')} · confidence {Math.round(f.confidence * 100)}%
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 md:grid-cols-2">
+        <Card>
+          <h2 className="text-sm font-semibold text-slate-900">Score breakdown</h2>
+          <p className="mt-2">
+            <span className="font-mono text-3xl font-semibold text-slate-900">{fmt(sb.overall_percent, '%')}</span>
+            <span className="ml-2 text-sm text-slate-500">
+              difficulty-weighted ({sb.weighted_achieved} / {sb.weighted_max})
+            </span>
+          </p>
+          <div className="mt-3 overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="text-xs text-slate-500">
+                <tr>
+                  <th scope="col" className="py-1 font-medium">Question (latest attempt)</th>
+                  <th scope="col" className="py-1 font-medium">Level</th>
+                  <th scope="col" className="py-1 font-medium">Weight</th>
+                  <th scope="col" className="py-1 font-medium">Score</th>
+                  <th scope="col" className="py-1 font-medium">Help</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sb.per_question.map((q) => (
+                  <tr key={q.question_id} className="border-t border-slate-100 text-slate-700">
+                    <td className="py-1.5">{titles[q.question_id] ?? q.question_id}</td>
+                    <td className="py-1.5">{q.difficulty}</td>
+                    <td className="py-1.5 font-mono">×{q.weight}</td>
+                    <td className="py-1.5 font-mono">{q.score}</td>
+                    <td className="py-1.5">{q.assisted ? 'Assisted' : 'Independent'}</td>
+                  </tr>
+                ))}
+                {sb.per_question.length === 0 && (
+                  <tr><td colSpan={5} className="py-2 text-slate-500">No attempts yet.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+          <p className="mt-2 text-xs text-slate-500">{sb.note}</p>
+        </Card>
+
+        <Card>
+          <h2 className="text-sm font-semibold text-slate-900">Assisted vs independent</h2>
+          <dl className="mt-3 grid grid-cols-3 gap-3 text-center">
+            <div className="rounded-md bg-amber-50 p-3">
+              <dt className="text-xs text-amber-800">Assisted ({avi.assisted.count})</dt>
+              <dd className="mt-1 font-mono text-lg text-slate-900">{fmt(avi.assisted.mean_score)}</dd>
+            </div>
+            <div className="rounded-md bg-sky-50 p-3">
+              <dt className="text-xs text-sky-800">Independent ({avi.independent.count})</dt>
+              <dd className="mt-1 font-mono text-lg text-slate-900">{fmt(avi.independent.mean_score)}</dd>
+            </div>
+            <div className="rounded-md bg-slate-50 p-3">
+              <dt className="text-xs text-slate-600">Transfer gap</dt>
+              <dd className="mt-1 font-mono text-lg text-slate-900">{fmt(avi.transfer_gap)}</dd>
+            </div>
+          </dl>
+          <p className="mt-2 text-xs text-slate-500">Mean score per attempt. {avi.note}</p>
+
+          <h2 className="mt-5 text-sm font-semibold text-slate-900">
+            Mastery by skill <span className="font-normal text-slate-500">(heuristic indicator, not a validated measure)</span>
+          </h2>
+          <div className="mt-2 overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="text-xs text-slate-500">
+                <tr>
+                  <th scope="col" className="py-1 font-medium">Skill</th>
+                  <th scope="col" className="py-1 font-medium">Independent transfer</th>
+                  <th scope="col" className="py-1 font-medium">Assisted / independent mean</th>
+                  <th scope="col" className="py-1 font-medium">Indicator</th>
+                </tr>
+              </thead>
+              <tbody>
+                {skills.map(([skill, m]) => (
+                  <tr key={skill} className="border-t border-slate-100 text-slate-700">
+                    <td className="py-1.5">{skill}</td>
+                    <td className="py-1.5 font-mono">
+                      {m.independent_transfer_correct}/{m.independent_transfer_total}
+                    </td>
+                    <td className="py-1.5 font-mono">
+                      {fmt(m.assisted_mean)} / {fmt(m.independent_mean)}
+                    </td>
+                    <td className="py-1.5 font-mono">
+                      {m.heuristic_mastery === null ? '—' : `${Math.round(m.heuristic_mastery * 100)}%`}
+                    </td>
+                  </tr>
+                ))}
+                {skills.length === 0 && (
+                  <tr><td colSpan={4} className="py-2 text-slate-500">No evidence yet (recorded when the student moves on).</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+          <p className="mt-2 text-xs text-slate-500">
+            Updated when the student moves to the next question, using their latest attempt on each question.
+          </p>
+        </Card>
+      </div>
+
+      <Card>
+        <h2 className="text-sm font-semibold text-slate-900">Attempt log &amp; review ({view.attempts.length})</h2>
+        <p className="mt-1 text-xs text-slate-500">
+          Open an attempt to compare code, explanation and plan, see the AI rubric breakdown, and override or approve the
+          concept score. Every review is kept in the audit history.
+        </p>
+        <div className="mt-3 flex flex-col gap-2">
+          {view.attempts.map((a, i) => (
+            <AttemptDetails key={a.attempt_id} attempt={a} index={i} onReviewed={onReviewed} />
+          ))}
+          {view.attempts.length === 0 && <p className="text-sm text-slate-500">No attempts yet.</p>}
+        </div>
+      </Card>
+
+      <Card>
+        <h2 className="text-sm font-semibold text-slate-900">Help log ({view.help_log.length})</h2>
+        <p className="mt-1 text-xs text-slate-500">Context only: help requests are never penalised by count alone.</p>
+        <div className="mt-3 overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead className="text-xs text-slate-500">
+              <tr>
+                <th scope="col" className="py-1 pr-3 font-medium">Time</th>
+                <th scope="col" className="py-1 pr-3 font-medium">Question</th>
+                <th scope="col" className="py-1 pr-3 font-medium">Mode</th>
+                <th scope="col" className="py-1 pr-3 font-medium">Request</th>
+                <th scope="col" className="py-1 pr-3 font-medium">Decision</th>
+                <th scope="col" className="py-1 font-medium">Reason</th>
+              </tr>
+            </thead>
+            <tbody>
+              {view.help_log.map((h) => (
+                <tr key={h.event_id} className="border-t border-slate-100 align-top text-slate-700">
+                  <td className="py-1.5 pr-3 whitespace-nowrap text-xs">{formatTime(h.created_at)}</td>
+                  <td className="py-1.5 pr-3">{titles[h.question_id] ?? h.question_id}</td>
+                  <td className="py-1.5 pr-3 capitalize">
+                    {h.mode}
+                    {h.hint_level > 0 && ` ${h.hint_level}/3`}
+                  </td>
+                  <td className="max-w-xs py-1.5 pr-3 break-words whitespace-pre-wrap">{h.query}</td>
+                  <td className="py-1.5 pr-3">
+                    <Badge className={DECISION_STYLE[h.decision].className}>{DECISION_STYLE[h.decision].label}</Badge>
+                  </td>
+                  <td className="py-1.5 text-xs">{assistReasonLabel(h.reason_code)}</td>
+                </tr>
+              ))}
+              {view.help_log.length === 0 && (
+                <tr><td colSpan={6} className="py-2 text-slate-500">No help requested.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+    </>
+  )
+}
+
+/** Expand the linked attempt's <details> when jumping to it from the review queue. */
+function openAttempt(attemptId: string) {
+  const el = document.getElementById(`attempt-${attemptId}`)
+  if (el instanceof HTMLDetailsElement) el.open = true
 }

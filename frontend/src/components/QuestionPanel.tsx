@@ -1,3 +1,4 @@
+import { callLabel, functionNameFrom, pyRepr } from '../runner/format'
 import type { PublicQuestion } from '../types/contracts'
 
 const difficultyLabel: Record<PublicQuestion['difficulty'], string> = {
@@ -12,11 +13,8 @@ const difficultyStyle: Record<PublicQuestion['difficulty'], string> = {
   3: 'bg-rose-50 text-rose-800 ring-rose-200',
 }
 
-function show(v: unknown): string {
-  return JSON.stringify(v)
-}
-
 export function QuestionPanel({ question }: { question: PublicQuestion }) {
+  const fn = functionNameFrom(question.function_signature)
   return (
     <section aria-labelledby="question-title" className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-2">
@@ -49,21 +47,23 @@ export function QuestionPanel({ question }: { question: PublicQuestion }) {
           <table className="w-full text-left font-mono text-sm">
             <thead className="text-xs uppercase tracking-wide text-slate-500">
               <tr>
-                <th scope="col" className="py-1 pr-4 font-medium">Input</th>
+                <th scope="col" className="py-1 pr-4 font-medium">Call</th>
                 <th scope="col" className="py-1 font-medium">Expected</th>
               </tr>
             </thead>
             <tbody className="text-slate-800">
               {question.example_tests.map((t, i) => (
                 <tr key={i} className="border-t border-slate-100">
-                  <td className="py-1.5 pr-4">{show(t.input)}</td>
-                  <td className="py-1.5">{show(t.expected)}</td>
+                  <td className="py-1.5 pr-4">{callLabel(fn, t.input)}</td>
+                  <td className="py-1.5">{pyRepr(t.expected)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-        <p className="mt-2 text-xs text-slate-500">Hidden edge-case tests are also used for grading.</p>
+        <p className="mt-2 text-xs text-slate-500">
+          Your code score currently comes from these example tests, run in your browser (provisional).
+        </p>
       </div>
     </section>
   )

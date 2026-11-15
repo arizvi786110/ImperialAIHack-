@@ -1,5 +1,14 @@
 @import "tailwindcss";
 
-body {
-  @apply bg-slate-100 text-slate-900 antialiased;
+:root {
+  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #f7f9fd;
+  color: #17213d;
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
 }
+body { margin: 0; min-width: 320px; min-height: 100vh; }
+button { cursor: pointer; }
+button:disabled { cursor: not-allowed; }
+::selection { background: #dbeafe; color: #1e40af; }
+:focus-visible { outline: 3px solid #93c5fd; outline-offset: 2px; }

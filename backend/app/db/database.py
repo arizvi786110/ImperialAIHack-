@@ -61,6 +61,11 @@ def db_session() -> Iterator[Session]:
 
 
 def get_db() -> Iterator[Session]:
-    """FastAPI dependency."""
+    """FastAPI dependency. ALWAYS use as Depends(get_db, scope="function").
+
+    The default scope ends the dependency (i.e. commits) AFTER the response is sent, so
+    a fast client could read stale data and a failed commit would still return 200.
+    tests/test_db_commit_before_response.py enforces this.
+    """
     with db_session() as db:
         yield db

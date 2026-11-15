@@ -45,7 +45,7 @@ def _mean(xs: list[float]) -> Optional[float]:
 
 
 @router.get("/sessions", response_model=Envelope[dict])
-def teacher_roster(db: Session = Depends(get_db)) -> Envelope[dict]:
+def teacher_roster(db: Session = Depends(get_db, scope="function")) -> Envelope[dict]:
     """Prototype roster of recent sessions, using student-provided demo aliases."""
     rows = db.scalars(select(SessionRow).order_by(SessionRow.created_at.desc()).limit(100)).all()
     return Envelope(ok=True, data={"sessions": [
@@ -62,7 +62,7 @@ def teacher_roster(db: Session = Depends(get_db)) -> Envelope[dict]:
 
 
 @router.get("/session/{session_id}", response_model=Envelope[TeacherSessionResponse])
-def teacher_session(session_id: str, db: Session = Depends(get_db)) -> Envelope[TeacherSessionResponse]:
+def teacher_session(session_id: str, db: Session = Depends(get_db, scope="function")) -> Envelope[TeacherSessionResponse]:
     session = require_session(db, session_id)
     attempts = repo.list_attempts(db, session.id)
     evals: dict[str, EvaluationRow] = {e.attempt_id: e for e in repo.list_evaluations(db, [a.id for a in attempts])}
@@ -189,7 +189,7 @@ def teacher_session(session_id: str, db: Session = Depends(get_db)) -> Envelope[
 
 
 @router.post("/review", response_model=Envelope[TeacherReviewResponse])
-def teacher_review(req: TeacherReviewRequest, db: Session = Depends(get_db)) -> Envelope[TeacherReviewResponse]:
+def teacher_review(req: TeacherReviewRequest, db: Session = Depends(get_db, scope="function")) -> Envelope[TeacherReviewResponse]:
     attempt = repo.get_attempt(db, req.attempt_id)
     if attempt is None:
         raise ApiError(404, "ATTEMPT_NOT_FOUND", "No attempt with that id.")

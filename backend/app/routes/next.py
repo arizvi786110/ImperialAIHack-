@@ -111,7 +111,7 @@ def _current(db: Session, session: SessionRow, reason: str) -> NextResponse:
 
 
 @router.post("/api/next", response_model=Envelope[NextResponse])
-def next_question(req: NextRequest, db: Session = Depends(get_db)) -> Envelope[NextResponse]:
+def next_question(req: NextRequest, db: Session = Depends(get_db, scope="function")) -> Envelope[NextResponse]:
     session = require_session(db, req.session_id)
     attempt = require_attempt(db, session, req.previous_attempt_id)
 

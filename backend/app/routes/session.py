@@ -12,7 +12,7 @@ router = APIRouter(prefix="/api/session")
 
 
 @router.post("/start", response_model=Envelope[SessionStartResponse])
-def start_session(req: SessionStartRequest, db: Session = Depends(get_db)) -> Envelope[SessionStartResponse]:
+def start_session(req: SessionStartRequest, db: Session = Depends(get_db, scope="function")) -> Envelope[SessionStartResponse]:
     question = repo.get_problem(db, STARTING_QUESTION_ID)
     if question is None:
         raise ApiError(500, "QUESTION_BANK_EMPTY", "No starting question in the bank.")
@@ -26,7 +26,7 @@ def start_session(req: SessionStartRequest, db: Session = Depends(get_db)) -> En
 
 
 @router.get("/{session_id}", response_model=Envelope[SessionStartResponse])
-def get_session(session_id: str, db: Session = Depends(get_db)) -> Envelope[SessionStartResponse]:
+def get_session(session_id: str, db: Session = Depends(get_db, scope="function")) -> Envelope[SessionStartResponse]:
     """Reload saved progress (e.g. after a browser refresh). Same shape as /start."""
     row = repo.get_session(db, session_id)
     if row is None:

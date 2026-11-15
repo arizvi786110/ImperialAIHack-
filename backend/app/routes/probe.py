@@ -41,7 +41,7 @@ def _stored(db: Session, attempt_id: str) -> ConceptProbeRow | None:
     return db.scalars(select(ConceptProbeRow).where(ConceptProbeRow.attempt_id == attempt_id)).first()
 
 @router.post("/start", response_model=Envelope[dict])
-def start_probe(req: ProbeRequest, db: Session = Depends(get_db)) -> Envelope[dict]:
+def start_probe(req: ProbeRequest, db: Session = Depends(get_db, scope="function")) -> Envelope[dict]:
     session = require_session(db, req.session_id)
     attempt = require_attempt(db, session, req.attempt_id)
     prior = _stored(db, attempt.id)
@@ -63,7 +63,7 @@ def start_probe(req: ProbeRequest, db: Session = Depends(get_db)) -> Envelope[di
     return Envelope(ok=True, data=public(row))
 
 @router.post("/answer", response_model=Envelope[dict])
-def answer_probe(req: AnswerRequest, db: Session = Depends(get_db)) -> Envelope[dict]:
+def answer_probe(req: AnswerRequest, db: Session = Depends(get_db, scope="function")) -> Envelope[dict]:
     session = require_session(db, req.session_id)
     attempt = require_attempt(db, session, req.attempt_id)
     row = _stored(db, attempt.id)

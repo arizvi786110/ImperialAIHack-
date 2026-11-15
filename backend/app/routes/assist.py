@@ -19,7 +19,7 @@ router = APIRouter()
 
 
 @router.post("/api/assist", response_model=Envelope[AssistResponse])
-def assist(req: AssistRequest, db: Session = Depends(get_db)) -> Envelope[AssistResponse]:
+def assist(req: AssistRequest, db: Session = Depends(get_db, scope="function")) -> Envelope[AssistResponse]:
     session = require_session(db, req.session_id)
     question = require_current_question(db, session, req.question_id)
     if req.current_attempt_id:

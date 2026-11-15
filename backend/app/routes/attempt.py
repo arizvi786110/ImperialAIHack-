@@ -41,7 +41,7 @@ def _feedback(s: scoring.AttemptScore, rationale: str) -> str:
 @router.post("/api/attempt", response_model=Envelope[AttemptResponse])
 def submit_attempt(
     req: AttemptRequest,
-    db: Session = Depends(get_db),
+    db: Session = Depends(get_db, scope="function"),
     idempotency_key: Optional[str] = Header(default=None, max_length=64),
 ) -> Envelope[AttemptResponse]:
     # A6: a retried/double-clicked submit with the same key returns the original result.

@@ -221,9 +221,9 @@ export function Workspace(props: WorkspaceProps) {
   const arrival = props.arrivalReason ? NEXT_REASON[props.arrivalReason] : null
 
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 py-6">
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-600">
-        <span className="font-semibold text-slate-900">Question {props.questionNumber}</span>
+    <div className="mx-auto flex w-full max-w-[1450px] flex-col gap-5 px-4 py-7 sm:px-7">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl border border-indigo-100 bg-gradient-to-r from-indigo-50 via-white to-white p-4 text-sm text-slate-600">
+        <span className="rounded-lg bg-indigo-600 px-3 py-1.5 font-bold text-white">Question {props.questionNumber}</span>
         <span>
           Stage: <span className="font-medium text-slate-800">{STAGE_LABEL[state.stage]}</span>
         </span>
@@ -250,17 +250,23 @@ export function Workspace(props: WorkspaceProps) {
         </div>
       )}
 
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-        <aside className="min-w-0 rounded-lg border border-slate-200 bg-white p-5 shadow-sm md:max-h-[calc(100dvh-10rem)] md:overflow-y-auto">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(310px,0.9fr)_minmax(0,1.35fr)]">
+        <aside className="min-w-0 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_15px_40px_-25px_rgba(30,41,59,0.28)] lg:sticky lg:top-24 lg:max-h-[calc(100dvh-7rem)] lg:overflow-y-auto">
           <QuestionPanel question={question} />
         </aside>
 
-        <main className="flex min-w-0 flex-col rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <main className="flex min-w-0 flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_15px_40px_-25px_rgba(30,41,59,0.28)]">
           <Tabs tabs={tabs} active={tab} onChange={setTab} label="Workspace">
             {tab === 'code' && (
               <div className="flex flex-col gap-4">
-                <div className="h-[45vh] min-h-[280px]">
-                  <CodeEditor value={code} onChange={setCode} onRun={run} onSubmit={() => void submit()} />
+                <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-slate-50/80 px-4 py-3">
+                    <span className="flex items-center gap-2 text-sm font-bold text-slate-800"><span className="rounded-lg bg-blue-100 px-2.5 py-1 text-xs text-blue-700">Py</span> solution.py</span>
+                    <span className="text-xs text-slate-500">Python 3 · Light editor</span>
+                  </div>
+                  <div className="h-[45vh] min-h-[280px]">
+                    <CodeEditor value={code} onChange={setCode} onRun={run} onSubmit={() => void submit()} />
+                  </div>
                 </div>
 
                 {attachedPlan && (
@@ -277,21 +283,21 @@ export function Workspace(props: WorkspaceProps) {
                     Explain your approach
                   </label>
                   <p className="text-xs text-slate-500">
-                    Graded separately (30 pts): core idea, time/space complexity, and edge cases you considered.
+                    Be specific rather than formal. What rule did you use, why does it work, and what edge case did you consider? (30 pts)
                   </p>
                   <textarea
                     id={explanationId}
                     value={explanation}
                     onChange={(e) => setExplanation(e.target.value)}
                     rows={4}
-                    className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-indigo-600"
+                    className="mt-1 w-full rounded-xl border border-slate-200 bg-[#fbfcff] px-4 py-3 text-sm leading-6 focus-visible:outline-2 focus-visible:outline-indigo-600"
                     placeholder="e.g. I count how often each item appears, then… This is O(n) time because…"
                   />
                 </div>
 
-                <div className="flex flex-wrap items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3 rounded-xl bg-slate-50/80 p-3">
                   <button type="button" onClick={run} disabled={busy} className={btn.dark}>
-                    {status === 'loading' && !submitting ? 'Loading Python…' : status && !submitting ? 'Running…' : 'Run'}
+                    {status === 'loading' && !submitting ? 'Loading Python…' : status && !submitting ? 'Running…' : 'Run Python'}
                   </button>
                   <button type="button" onClick={submit} disabled={busy || !explanation.trim()} className={btn.primary}>
                     {submitLabel}
